@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ros_camera:
+    image: "camera_image"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: camera_container
+    devices:
+      - "/dev/video4:/dev/video4"  # Map the camera's USB device to the container
+    environment:
+      - PYTHONUNBUFFERED=1  # Ensures Python output is visible in real-time
+      - DISPLAY=${DISPLAY}  # Set the display environment variable
+      - QT_X11_NO_MITSHM=1  # Disable MIT-SHM for better compatibility
+    tty: true  # Keep the container running for ROS commands
+    privileged: true  # Allow access to hardware devices
