@@ -2,7 +2,9 @@ import cv2
 import sys
 from random import randint
 import time
+from . import utils
 
+utils = utils.Utils()
 
 tracker_types = ['MOSSE', 'CSRT']
 
@@ -22,7 +24,7 @@ def getRandomColor():
 
 
 def get_multi_tracker(bboxes, frame_init):
-    tracker_type = "MOSSE"
+    tracker_type = "CSRT"
     multi_tracker = cv2.legacy.MultiTracker_create()
     print("Boxes init::: ", bboxes)
 
@@ -31,28 +33,23 @@ def get_multi_tracker(bboxes, frame_init):
     
     return multi_tracker
 
-def add_tracker(multi_tracker, frame, bbox):
-    tracker_type = "CSRT"  # You can make this dynamic if needed
-    tracker = create_tracker_by_name(tracker_type)
-    
-    if tracker is None:
-        print("Failed to create tracker!")
-        return False  # Indicate that the tracker addition failed
-    
-    multi_tracker.add(tracker, frame, bbox)
-    print(f"Added tracker for bbox: {bbox}")
-    return True  # Indicate success
-
-def tracking(multi_tracker, frame_update):
+def tracking(self, multi_tracker, frame_update):
     ok, boxes = multi_tracker.update(frame_update)
 
-    if ok:
-        print("Tracking update :::::::::::::::::")
+    if ok:      
         updated_boxes = []  # Store the updated tracking boxes
+
         for i, new_box in enumerate(boxes):
             (x, y, w, h) = [int(v) for v in new_box]
             updated_boxes.append((x, y, w, h))
             cv2.rectangle(frame_update, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            cv2.putText(frame_update, f"{x, y, w, h}", (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        
+            if len(self.old_boxes) > 0:
+                old_boxes = self.old_boxes[0]
+                utils.calculate_velocity(old_boxes, new_box, 0.02, frame_update)
+
+        self.old_boxes = updated_boxes
         return frame_update, updated_boxes  # Return the updated frame and boxes
     else:
         return False, None

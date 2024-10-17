@@ -19,7 +19,7 @@ class ImagePublishNode(Node):
             self.get_logger().error("Failed to open the camera.")
             return
 
-        self.timer_ = self.create_timer(1 / 30, self.timer_callback_)  # Publish every 0.1 seconds (10 FPS)
+        self.timer_ = self.create_timer(1 / 50, self.timer_callback_)  # Publish every 0.1 seconds (10 FPS)
         self.cv_bridge = CvBridge()
 
     def timer_callback_(self):
@@ -35,7 +35,7 @@ class ImagePublishNode(Node):
             image_message = self.cv_bridge.cv2_to_imgmsg(frame, "bgr8")
             # Publish the image message.
             self.publisher_.publish(image_message)
-            self.get_logger().info('Published image from camera')
+            # self.get_logger().info('Published image from camera')
 
         except CvBridgeError as e:
             self.get_logger().error(f'Failed to convert image: {str(e)}')
