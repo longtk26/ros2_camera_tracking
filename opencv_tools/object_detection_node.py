@@ -24,6 +24,11 @@ class ObjectDetectionNode(Node):
         self.cv_bridge = CvBridge()
 
         self.coco_labels = {k: v for k, v in enumerate(COCO_INSTANCE_CATEGORY_NAMES)}
+        # Init calculate
+        self.first_ratio = 0
+        self.first_focal = 0
+        self.pixel_to_meter_ratio = 0
+        self.focal_length = 0
 
         # Init boxes for tracking
         self.boxes = []

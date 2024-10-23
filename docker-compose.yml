@@ -15,3 +15,9 @@ services:
       - QT_X11_NO_MITSHM=1  # Disable MIT-SHM for better compatibility
     tty: true  # Keep the container running for ROS commands
     privileged: true  # Allow access to hardware devices
+    networks:
+      - ros_node  # Attach to the existing ros_node network
+
+networks:
+  ros_node:
+    external: true
