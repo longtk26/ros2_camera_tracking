@@ -67,3 +67,37 @@ class Utils:
         distance = (real_high_person * focal_length)/high_person_in_frame
 
         return distance
+    
+    def calculate_angle(self, position, current_frame, node_detect):
+        # Get the width and height of the current frame
+        current_height, current_width, _ = current_frame.shape
+        node_detect.get_logger().info(f"Width of picture: {current_width}")
+        
+        # Camera parameters
+        horizontal_fov = 80  # in degrees
+        
+        # Calculate angle per pixel for the current width
+        angle_per_pixel = horizontal_fov / current_width
+
+        # Bounding box center
+        x, y, w, h = position
+        person_center_x = x + w / 2
+
+        # Calculate the pixel offset from the center of the image
+        offset_x = person_center_x - (current_width / 2)
+
+        # Calculate the angle
+        angle = offset_x * angle_per_pixel
+
+        # Display angle on the frame if provided
+        if current_frame is not None:
+            angle_text = f"Angle: {angle:.2f}°"
+            position_text = (50, 150)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 1
+            color = (0, 255, 0)
+            thickness = 2
+
+            cv2.putText(current_frame, angle_text, position_text, font, font_scale, color, thickness)
+
+        return angle
