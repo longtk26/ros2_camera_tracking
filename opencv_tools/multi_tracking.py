@@ -49,6 +49,7 @@ def tracking(self, multi_tracker, frame_update):
                 old_boxes = self.old_boxes[0]
                 utils.calculate_velocity(old_boxes, new_box, 0.02, frame_update, self)
                 utils.calculate_distance(new_box, frame_update, self)
+                utils.calculate_angle(new_box, frame_update, self)
 
         self.old_boxes = updated_boxes
         return frame_update, updated_boxes  # Return the updated frame and boxes

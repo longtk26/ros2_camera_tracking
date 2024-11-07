@@ -35,6 +35,7 @@ RUN pip3 install torch torchvision torchaudio --index-url https://download.pytor
 RUN pip3 install opencv-python==4.5.4.58
 RUN pip3 install opencv-contrib-python==4.5.4.58
 RUN pip3 install "numpy<2"
+RUN pip3 install -r /app/ros2_ws/src/opencv_tools/requirements.txt
 
 
 # Install dependencies for cv_bridge

@@ -16,6 +16,7 @@ class Utils:
         velocity = distance / fps
 
         real_world_height = 1.63
+        velocity_meter = 0
 
         if h_new != 0:
             if node_detect.first_ratio == 0:
@@ -36,7 +37,8 @@ class Utils:
             thickness = 2  
 
             cv2.putText(current_frame, velocity_text, position, font, font_scale, color, thickness)
-
+        return velocity_meter
+    
     def calculate_distance(self, position, current_frame, node_detect):
         x, y, w, h = position
         real_high  = 1.63
@@ -91,7 +93,7 @@ class Utils:
 
         # Display angle on the frame if provided
         if current_frame is not None:
-            angle_text = f"Angle: {angle:.2f}°"
+            angle_text = f"Angle: {angle:.2f} degree"
             position_text = (50, 150)
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 1
