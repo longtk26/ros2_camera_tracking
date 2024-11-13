@@ -26,6 +26,8 @@ setup(
         'console_scripts': [
             'object_detection_node = opencv_tools.object_detection_node:main',
             'image_publish_node = opencv_tools.image_pub_node:main',
+            'socket_node = opencv_tools.socket_node:main',
+            'http_node = opencv_tools.http_node:main',
         ],
     },
 )

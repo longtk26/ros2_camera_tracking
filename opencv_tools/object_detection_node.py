@@ -88,7 +88,7 @@ class ObjectDetectionNode(Node):
  
         # If frame_update is not False, publish the updated frame 
         if frame_update is not False: 
-            self.get_logger().info('Tracking..........') 
+            # self.get_logger().info('Tracking..........') 
             handled_image = self.cv_bridge.cv2_to_imgmsg(frame_update, "bgr8") 
             self.publishers_.publish(handled_image) 
      

@@ -73,7 +73,7 @@ class Utils:
     def calculate_angle(self, position, current_frame, node_detect):
         # Get the width and height of the current frame
         current_height, current_width, _ = current_frame.shape
-        node_detect.get_logger().info(f"Width of picture: {current_width}")
+        # node_detect.get_logger().info(f"Width of picture: {current_width}")
         
         # Camera parameters
         horizontal_fov = 80  # in degrees

@@ -21,6 +21,16 @@ def generate_launch_description():
         executable="object_detection_node",
     )
 
+    socket_node = Node(
+        package="opencv_tools",
+        executable="socket_node",
+    )
+
+    http_node = Node(
+        package="opencv_tools",
+        executable="http_node",
+    )
+
     # RViz2 node
     rviz2_node = Node(
         package="rviz2",
@@ -29,7 +39,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        rviz2_node,
+        # rviz2_node,
         publish_image_node,
-        detect_tracking_node
+        detect_tracking_node,
+        socket_node,
+        http_node
     ])
