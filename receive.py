@@ -4,7 +4,7 @@ import time
 def main():
     # Configure the serial port (update the port name as needed)
     port = '/dev/ttyUSB0'  # Update to your serial port, e.g., COM3 for Windows
-    baud_rate = 9600  # Match this with your device's baud rate
+    baud_rate = 19200  # Match this with your device's baud rate
 
     # Open the serial port
     try:
@@ -18,8 +18,9 @@ def main():
         while True:
             # Read data from the serial port
             try:
-                data = ser.readline().decode('utf-8').strip()
-                print(f"Received data: {data}")
+                if ser.isOpen():
+                    data = ser.readline().decode('utf-8').strip()
+                    print(f"Received data: {data}")
             except UnicodeDecodeError as e:
                 print(f"Error decoding data: {e}")
 
