@@ -19,8 +19,8 @@ class ImagePublishNode(Node):
         self.get_logger().info('Image publishing node started...')
 
         # Initialize the camera capture (0 indicates the default camera)
-        self.cap = cv2.VideoCapture(4)
-        # self.cap = cv2.VideoCapture(0)
+        # self.cap = cv2.VideoCapture(4)
+        self.cap = cv2.VideoCapture(0)
 
         if not self.cap.isOpened():
             self.get_logger().error("Failed to open the camera.")

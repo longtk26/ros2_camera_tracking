@@ -32,18 +32,15 @@ def generate_launch_description():
         executable="object_detection_node",
     )
 
-
-    # RViz2 node
-    rviz2_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        arguments=["-d", rviz_config_path]
+    serial_node = Node(
+        package="opencv_tools",
+        executable="serial_node",
     )
 
     return LaunchDescription([
-        # rviz2_node,
         publish_image_node,
         detect_tracking_node,
-        # rosbridge_server,
+        serial_node,
+        rosbridge_server,
         # socket_node
     ])

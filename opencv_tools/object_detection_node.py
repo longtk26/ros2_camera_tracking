@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, CompressedImage
+from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import torchvision
@@ -14,6 +15,7 @@ class ObjectDetectionNode(Node):
     def __init__(self):
         super().__init__('object_detection_node')
         self.publishers_ = self.create_publisher(CompressedImage, 'detection_image', 10)
+        self.publishers_follow_specs_ = self.create_publisher(Twist, 'follow_specs', 10)
         self.subscribers_ = self.create_subscription(Image, "image_raw", self.listener_callback, 10)
         
         # Load the model with the correct weights

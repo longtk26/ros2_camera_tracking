@@ -61,6 +61,8 @@ class Utils:
 
         cv2.putText(current_frame, distance_text, position, font, font_scale, color, thickness)
 
+        return distance
+
     def focal_length(self, high_in_image, real_high, measured_distance):
         focal_length = (high_in_image * measured_distance) / real_high
         return focal_length

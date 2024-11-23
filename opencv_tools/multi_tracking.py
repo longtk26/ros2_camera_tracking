@@ -2,6 +2,7 @@ import cv2
 import sys
 from random import randint
 import time
+from geometry_msgs.msg import Twist
 from . import utils
 
 utils = utils.Utils()
@@ -47,9 +48,13 @@ def tracking(self, multi_tracker, frame_update):
         
             if len(self.old_boxes) > 0:
                 old_boxes = self.old_boxes[0]
-                utils.calculate_velocity(old_boxes, new_box, 0.02, frame_update, self)
-                utils.calculate_distance(new_box, frame_update, self)
-                utils.calculate_angle(new_box, frame_update, self)
+                vel = utils.calculate_velocity(old_boxes, new_box, 0.02, frame_update, self)
+                distance =  utils.calculate_distance(new_box, frame_update, self)
+                angle = utils.calculate_angle(new_box, frame_update, self)
+                twist_message = Twist()
+                twist_message.linear.x = vel
+                twist_message.angular.z = angle
+                self.publishers_follow_specs_.publish(twist_message)
 
         self.old_boxes = updated_boxes
         return frame_update, updated_boxes  # Return the updated frame and boxes

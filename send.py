@@ -24,13 +24,13 @@ def main():
         while True:
             if ser.isOpen():
                 # Send data
-                data_to_send = f"0111111 {count}\n"
-                ser.write(data_to_send.encode())
+                data_to_send = f"Hello, World! {count}\n"
+                ser.write(data_to_send.encode("utf-8"))
                 print(f"Sent: {data_to_send.strip()}")
 
                 # Read response
-                # response = ser.readline()
-                # print(f"Received: {response}")
+                response = ser.readline()
+                print(f"Received: {response}")
 
                 count += 1
                 time.sleep(1)
