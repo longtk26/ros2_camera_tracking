@@ -1,4 +1,5 @@
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 from rclpy.node import Node
 import rclpy
 import cv2
@@ -8,13 +9,18 @@ class ImagePublishNode(Node):
     def __init__(self, name):
         super().__init__(name)
 
+        # Signal publish image
+        self.SIGNAL_PUBLISH_IMAGE = False
+
         # Create a publisher to publish images to the 'image_raw' topic.
         self.publisher_ = self.create_publisher(Image, 'image_raw', 10)
+        self.subscribers_ = self.create_subscription(String, "ui_control", self.listener_callback, 10)
+
         self.get_logger().info('Image publishing node started...')
 
         # Initialize the camera capture (0 indicates the default camera)
-        # self.cap = cv2.VideoCapture(4)
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(4)
+        # self.cap = cv2.VideoCapture(0)
 
         if not self.cap.isOpened():
             self.get_logger().error("Failed to open the camera.")
@@ -32,15 +38,22 @@ class ImagePublishNode(Node):
             return
 
         try:
-            # Convert the image to an ROS image message.
             image_message = self.cv_bridge.cv2_to_imgmsg(frame, "bgr8")
-            # Publish the image message.
-            self.publisher_.publish(image_message)
+
+            if self.SIGNAL_PUBLISH_IMAGE:
+                self.publisher_.publish(image_message)
             # self.get_logger().info('Published image from camera')
 
         except CvBridgeError as e:
             self.get_logger().error(f'Failed to convert image: {str(e)}')
             return
+    
+    def listener_callback(self, msg):
+        self.get_logger().info(f"Received message: {msg.data}")
+        if msg.data == "start_follow":
+            self.SIGNAL_PUBLISH_IMAGE = True
+        elif msg.data == "stop_follow":
+            self.SIGNAL_PUBLISH_IMAGE = False
 
     def destroy_node(self):
         # Release the camera when the node is destroyed

@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import torchvision
@@ -13,7 +13,7 @@ from .multi_tracking import get_multi_tracker, tracking
 class ObjectDetectionNode(Node):
     def __init__(self):
         super().__init__('object_detection_node')
-        self.publishers_ = self.create_publisher(Image, 'detection_image', 10)
+        self.publishers_ = self.create_publisher(CompressedImage, 'detection_image', 10)
         self.subscribers_ = self.create_subscription(Image, "image_raw", self.listener_callback, 10)
         
         # Load the model with the correct weights
@@ -89,7 +89,9 @@ class ObjectDetectionNode(Node):
         # If frame_update is not False, publish the updated frame 
         if frame_update is not False: 
             # self.get_logger().info('Tracking..........') 
-            handled_image = self.cv_bridge.cv2_to_imgmsg(frame_update, "bgr8") 
+            # handled_image = self.cv_bridge.cv2_to_imgmsg(frame_update, "bgr8") 
+            handled_image = self.cv_bridge.cv2_to_compressed_imgmsg(frame_update)
+
             self.publishers_.publish(handled_image) 
      
     def init_tracker(self): 

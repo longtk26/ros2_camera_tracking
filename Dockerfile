@@ -22,9 +22,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa \
     && wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py
 
-# Install rviz2 for ROS2
-RUN apt update && apt install -y ros-humble-rviz2
-
 # Install colcon build tool and its extensions
 RUN apt install -y python3-colcon-common-extensions
 
@@ -42,7 +39,8 @@ RUN pip3 install -r /app/ros2_ws/src/opencv_tools/requirements.txt
 RUN apt update && apt install -y \
     ros-humble-cv-bridge \
     ros-humble-image-transport \
-    ros-humble-vision-opencv
+    ros-humble-vision-opencv \
+    ros-humble-rosbridge-server
 
 # Build the ROS2 workspace and source the environment
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && cd /app/ros2_ws && colcon build"
