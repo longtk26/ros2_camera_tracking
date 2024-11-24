@@ -7,6 +7,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: camera_container
+    ports:
+      - "9090:9090"  # Expose the ROS master port
     devices:
       - "/dev/video4:/dev/video4"  # Map the camera's USB device to the container
       - "/dev/ttyUSB0:/dev/ttyUSB0"  # Map the Arduino's USB device to the container
