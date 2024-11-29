@@ -16,7 +16,7 @@ class ObjectDetectionNode(Node):
         super().__init__('object_detection_node')
         self.publishers_ = self.create_publisher(CompressedImage, 'detection_image', 10)
         self.publishers_follow_specs_ = self.create_publisher(Twist, 'follow_specs', 10)
-        self.subscribers_ = self.create_subscription(Image, "image_raw", self.listener_callback, 10)
+        self.subscribers_ = self.create_subscription(CompressedImage, "image_raw", self.listener_callback, 10)
         
         # Load the model with the correct weights
         weights = SSDLite320_MobileNet_V3_Large_Weights.DEFAULT
@@ -42,7 +42,7 @@ class ObjectDetectionNode(Node):
 
     def listener_callback(self, msg): 
         try: 
-            cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8") 
+            cv_image = self.cv_bridge.compressed_imgmsg_to_cv2(msg) 
             self.cv_image = cv_image 
  
             if self.multi_tracker: 
@@ -92,7 +92,8 @@ class ObjectDetectionNode(Node):
         if frame_update is not False: 
             # self.get_logger().info('Tracking..........') 
             # handled_image = self.cv_bridge.cv2_to_imgmsg(frame_update, "bgr8") 
-            handled_image = self.cv_bridge.cv2_to_compressed_imgmsg(frame_update)
+            gray_frame = cv2.cvtColor(frame_update, cv2.COLOR_BGR2GRAY)
+            handled_image = self.cv_bridge.cv2_to_compressed_imgmsg(gray_frame)
 
             self.publishers_.publish(handled_image) 
      

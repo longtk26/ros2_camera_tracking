@@ -12,8 +12,9 @@ class SerialNode(Node):
 
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
-        self.baud_rate = 115200
-        self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=1)
+        self.baud_rate = 19200
+        self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=1
+                                               , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
 
         # ROS2 subscription
         self.subscription = self.create_subscription(
@@ -59,7 +60,7 @@ class SerialNode(Node):
         while rclpy.ok():
             try:
                 if self.serial_connection.in_waiting > 0:
-                    data = self.serial_connection.readline().decode().strip()
+                    data = self.serial_connection.readline()
                     self.get_logger().info(f"Received from STM32::::: {data}")
                     # Process the received data or publish it to another ROS topic if needed
             except Exception as e:

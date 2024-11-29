@@ -1,14 +1,5 @@
 FROM ros:humble-ros-base
 
-# Set the working directory
-WORKDIR /app
-
-# Create ROS2 workspace
-RUN mkdir -p /app/ros2_ws/src/opencv_tools
-
-# Copy source code to the container
-COPY . /app/ros2_ws/src/opencv_tools
-
 # Install necessary packages including wget
 RUN apt update && apt install -y \
     software-properties-common \
@@ -32,15 +23,23 @@ RUN pip3 install torch torchvision torchaudio --index-url https://download.pytor
 RUN pip3 install opencv-python==4.5.4.58
 RUN pip3 install opencv-contrib-python==4.5.4.58
 RUN pip3 install "numpy<2"
-RUN pip3 install -r /app/ros2_ws/src/opencv_tools/requirements.txt
-
 
 # Install dependencies for cv_bridge
 RUN apt update && apt install -y \
-    ros-humble-cv-bridge \
-    ros-humble-image-transport \
-    ros-humble-vision-opencv \
-    ros-humble-rosbridge-server
+ros-humble-cv-bridge \
+ros-humble-image-transport \
+ros-humble-vision-opencv \
+ros-humble-rosbridge-server
+
+# Set the working directory
+WORKDIR /app
+
+# Create ROS2 workspace
+RUN mkdir -p /app/ros2_ws/src/opencv_tools
+
+# Copy source code to the container
+COPY . /app/ros2_ws/src/opencv_tools
+RUN pip3 install -r /app/ros2_ws/src/opencv_tools/requirements.txt
 
 # Build the ROS2 workspace and source the environment
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && cd /app/ros2_ws && colcon build"

@@ -41,20 +41,21 @@ def tracking(self, multi_tracker, frame_update):
         updated_boxes = []  # Store the updated tracking boxes
 
         for i, new_box in enumerate(boxes):
-            (x, y, w, h) = [int(v) for v in new_box]
-            updated_boxes.append((x, y, w, h))
-            cv2.rectangle(frame_update, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.putText(frame_update, f"{x, y, w, h}", (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        
-            if len(self.old_boxes) > 0:
-                old_boxes = self.old_boxes[0]
-                vel = utils.calculate_velocity(old_boxes, new_box, 0.02, frame_update, self)
-                distance =  utils.calculate_distance(new_box, frame_update, self)
-                angle = utils.calculate_angle(new_box, frame_update, self)
-                twist_message = Twist()
-                twist_message.linear.x = vel
-                twist_message.angular.z = angle
-                self.publishers_follow_specs_.publish(twist_message)
+            if i == 0:
+                (x, y, w, h) = [int(v) for v in new_box]
+                updated_boxes.append((x, y, w, h))
+                cv2.rectangle(frame_update, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                cv2.putText(frame_update, f"{x, y, w, h}", (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+                if len(self.old_boxes) > 0:
+                    old_boxes = self.old_boxes[0]
+                    vel = utils.calculate_velocity(old_boxes, new_box, 0.02, frame_update, self)
+                    distance =  utils.calculate_distance(new_box, frame_update, self)
+                    angle = utils.calculate_angle(new_box, frame_update, self)
+                    twist_message = Twist()
+                    twist_message.linear.x = vel
+                    twist_message.angular.z = angle
+                    self.publishers_follow_specs_.publish(twist_message)
 
         self.old_boxes = updated_boxes
         return frame_update, updated_boxes  # Return the updated frame and boxes

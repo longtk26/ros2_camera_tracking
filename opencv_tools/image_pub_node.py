@@ -1,4 +1,4 @@
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from std_msgs.msg import String
 from rclpy.node import Node
 import rclpy
@@ -13,7 +13,7 @@ class ImagePublishNode(Node):
         self.SIGNAL_PUBLISH_IMAGE = False
 
         # Create a publisher to publish images to the 'image_raw' topic.
-        self.publisher_ = self.create_publisher(Image, 'image_raw', 10)
+        self.publisher_ = self.create_publisher(CompressedImage, 'image_raw', 10)
         self.subscribers_ = self.create_subscription(String, "ui_control", self.listener_callback, 10)
 
         self.get_logger().info('Image publishing node started...')
@@ -38,7 +38,7 @@ class ImagePublishNode(Node):
             return
 
         try:
-            image_message = self.cv_bridge.cv2_to_imgmsg(frame, "bgr8")
+            image_message = self.cv_bridge.cv2_to_compressed_imgmsg(frame, "jpeg")
 
             if self.SIGNAL_PUBLISH_IMAGE:
                 self.publisher_.publish(image_message)
