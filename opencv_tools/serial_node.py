@@ -13,18 +13,19 @@ class SerialNode(Node):
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
         self.baud_rate = 19200
-        self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=1
+        self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=0.001
                                                , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
 
         # ROS2 subscription
         self.subscription = self.create_subscription(
             String,
-            "stm32_topic",
+            "ui_control",
             self.listener_callback,
             10
         )
         self.subscription_follow_specs_ = self.create_subscription(Twist, "follow_specs", self.handle_follow_specs, 10)
-        
+        self.publishers_ = self.create_publisher(String, "stm32_topic", 10)
+
         # Thread for continuous reading from STM32
         self.read_thread = threading.Thread(target=self.read_from_stm32, daemon=True)
         self.read_thread.start()
@@ -36,7 +37,8 @@ class SerialNode(Node):
         self.get_logger().info(f"Sending to STM32: {msg.data}")
         try:
             # Send the message to STM32 via serial
-            self.serial_connection.write((msg.data + "\n").encode("utf-8"))
+            # self.serial_connection.write((msg.data + "\n").encode("utf-8"))
+            pass
         except Exception as e:
             self.get_logger().error(f"Error sending to STM32: {e}")
 
@@ -47,8 +49,8 @@ class SerialNode(Node):
         # self.get_logger().info(f"Sending follow specs to STM32: {msg}")
         try:
             # Send the message to STM32 via serial
-            self.serial_connection.write((f"{msg.linear.x},{msg.angular.z}\n").encode("utf-8"))
-            time.sleep(1)
+            self.serial_connection.write((f"s:1:2:{msg.angular.z}:{msg.linear.x}:e\n").encode("utf-8"))
+            time.sleep(0.001)
         except Exception as e:
             self.get_logger().error(f"Error sending follow specs to STM32: {e}")
 
@@ -60,8 +62,12 @@ class SerialNode(Node):
         while rclpy.ok():
             try:
                 if self.serial_connection.in_waiting > 0:
-                    data = self.serial_connection.readline()
+                    data = self.serial_connection.readline().decode("utf-8").strip()
                     self.get_logger().info(f"Received from STM32::::: {data}")
+                    # Publish the received data to another ROS topic
+                    msg = String()
+                    msg.data = data
+                    self.publishers_.publish(msg)
                     # Process the received data or publish it to another ROS topic if needed
             except Exception as e:
                 self.get_logger().error(f"Error reading from STM32: {e}")
