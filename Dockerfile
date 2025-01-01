@@ -1,5 +1,5 @@
-FROM ros:humble-ros-base
-
+# FROM ros:humble-ros-base
+FROM dustynv/ros:humble-ros-base-l4t-r32.7.1
 # Install necessary packages including wget
 RUN apt update && apt install -y \
     software-properties-common \
