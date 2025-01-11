@@ -34,12 +34,9 @@ class SerialNode(Node):
         self.subscription_follow_specs_ = self.create_subscription(Twist, "follow_specs", self.handle_follow_specs, 10)
         self.publishers_ = self.create_publisher(String, "stm32_topic", 10)
 
-        # Thread for continuous reading from STM32
-        self.read_thread = threading.Thread(target=self.read_from_stm32, daemon=True)
-        self.read_thread.start()
 
-        # Thread for sending follow specs to STM32 in follow mode
-        self.follow_thread = threading.Thread(target=self.send_follow_specs, daemon=True)
+        self.timer_ = self.create_timer(0.01, self.send_follow_specs)
+        self.timer_receive_STM32_ = self.create_timer(0.01, self.read_from_stm32)
         
 
     def listener_callback(self, msg):
@@ -50,12 +47,10 @@ class SerialNode(Node):
         try:
             if msg.data == "start_follow":
                 self.SIGNAL_FOLLOW_SPECS = True
-                self.follow_thread.start()
             elif msg.data == "stop_follow":
                 self.SIGNAL_FOLLOW_SPECS = False
                 self.specs["speed"] = 0
                 self.specs["angle"] = 0
-                self.follow_thread.join()
             pass
         except Exception as e:
             self.get_logger().error(f"Error sending to STM32: {e}")
@@ -69,7 +64,6 @@ class SerialNode(Node):
             # Send the message to STM32 via serial
             self.specs["speed"] = f"{msg.linear.x:.3f}"
             self.specs["angle"] = f"{msg.angular.z:.3f}"
-            self.serial_connection.write((f"s:1:2:{msg.angular.z}:{msg.linear.x}:e\n").encode("utf-8"))
         except Exception as e:
             self.get_logger().error(f"Error sending follow specs to STM32: {e}")
 
@@ -77,31 +71,29 @@ class SerialNode(Node):
         """
         Continuously read from STM32 and handle the data.
         """
-        self.get_logger().info("Starting STM32 read loop...")
-        while rclpy.ok():
-            try:
-                if self.serial_connection.in_waiting > 0:
-                    data = self.serial_connection.readline().decode("utf-8").strip()
-                    self.get_logger().info(f"Received from STM32::::: {data}")
-                    # Publish the received data to another ROS topic
-                    msg = String()
-                    msg.data = data
-                    self.publishers_.publish(msg)
-                    # Process the received data or publish it to another ROS topic if needed
-            except Exception as e:
-                self.get_logger().error(f"Error reading from STM32: {e}")
+        try:
+            if self.serial_connection.in_waiting > 0:
+                data = self.serial_connection.readline().decode("utf-8").strip()
+                self.get_logger().info(f"Received from STM32::::: {data}")
+                # Publish the received data to another ROS topic
+                msg = String()
+                msg.data = data
+                self.publishers_.publish(msg)
+                # Process the received data or publish it to another ROS topic if needed
+        except Exception as e:
+            self.get_logger().error(f"Error reading from STM32: {e}")
     
     def send_follow_specs(self):
         """
         Send follow specs to STM32 in follow mode.
         """
-        while rclpy.ok():
-            try:
-                if self.SIGNAL_FOLLOW_SPECS:
-                    self.serial_connection.write((f"s:1:2:{self.specs['angle']}:{self.specs['speed']}:e\n").encode("utf-8"))
-                    time.sleep(0.01)
-            except Exception as e:
-                self.get_logger().error(f"Error sending follow specs to STM32: {e}")
+        try:
+            if self.SIGNAL_FOLLOW_SPECS:
+                frame_ = f"s:1:2:{self.specs['angle']}:{self.specs['speed']}:e\n"
+                self.get_logger().info(f"Sending specs to stm32 {frame_}")
+                self.serial_connection.write((frame_).encode("utf-8"))
+        except Exception as e:
+            self.get_logger().error(f"Error sending follow specs to STM32: {e}")
 
     def destroy_node(self):
         """
