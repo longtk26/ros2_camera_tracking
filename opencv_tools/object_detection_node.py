@@ -37,7 +37,6 @@ class ObjectDetectionNode(Node):
         self.multi_tracker = None
         self.result_tracking = None
         self.old_boxes = []
-        self.get_logger().info("labels: %s" % self.coco_labels)
         self.get_logger().info('Object Detection Node has been started')
 
     def listener_callback(self, msg): 

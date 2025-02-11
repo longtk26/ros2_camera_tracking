@@ -3,14 +3,14 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 import serial
-import threading
-import time
 
 class SerialNode(Node):
     def __init__(self):
         super().__init__("serial_node")
         # Signal to start following specs
         self.SIGNAL_FOLLOW_SPECS = False
+        self.SIGNAL_GPS = False
+        self.SIGNAL_INIT_GPS = False
 
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
@@ -18,11 +18,25 @@ class SerialNode(Node):
         self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=0.001
                                                , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
 
+        # Serial gps configuration
+        self.serial_gps_port = "/dev/ttyUSB1"  # Update this to your GPS's port
+        self.baud_rate_gps = 38400
+        # self.serial_gps_conn = serial.Serial(
+        #     self.serial_gps_port,
+        #     self.baud_rate_gps,
+        #     timeout=0.1,
+        #     parity=serial.PARITY_NONE,
+        #     stopbits=serial.STOPBITS_ONE,
+        #     bytesize=serial.EIGHTBITS
+        # )
+        self.serial_gps_conn = None
+
         # Specs for STM32
         self.specs = {
             "speed": 0,
             "angle": 0
         }
+        self.gps_data = ""
 
         # ROS2 subscription
         self.subscription = self.create_subscription(
@@ -35,8 +49,11 @@ class SerialNode(Node):
         self.publishers_ = self.create_publisher(String, "stm32_topic", 10)
 
 
+        # ROS2 timers
         self.timer_ = self.create_timer(0.01, self.send_follow_specs)
         self.timer_receive_STM32_ = self.create_timer(0.01, self.read_from_stm32)
+        # self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
+        self.get_logger().info("Serial node has been started.")
         
 
     def listener_callback(self, msg):
@@ -44,14 +61,30 @@ class SerialNode(Node):
         Callback to handle messages from the ROS2 topic and send to STM32.
         """
         self.get_logger().info(f"===SIGNAL FROM UI CONTROL=== {msg.data}")
+        node_received = msg.data.split(" ")[0]
+        self.get_logger().info(f"===NODE RECEIVED=== {node_received}")
         try:
             if msg.data == "start_follow":
                 self.SIGNAL_FOLLOW_SPECS = True
+                self.SIGNAL_GPS = False
+                self.SIGNAL_INIT_GPS = False
             elif msg.data == "stop_follow":
                 self.SIGNAL_FOLLOW_SPECS = False
+                self.SIGNAL_GPS = False
+                self.SIGNAL_INIT_GPS = False
                 self.specs["speed"] = 0
                 self.specs["angle"] = 0
-            pass
+            elif node_received == "[serial]":
+                self.SIGNAL_FOLLOW_SPECS = False
+                self.gps_data = msg.data.split(" ")[1]
+                if not(self.gps_data == "find-me"):
+                    self.SIGNAL_GPS = True
+                    self.SIGNAL_INIT_GPS = False
+                    self.send_gps_data()
+                else:
+                    self.SIGNAL_GPS = False
+                    self.SIGNAL_INIT_GPS = True
+                    self.send_init_gps_lat_long()
         except Exception as e:
             self.get_logger().error(f"Error sending to STM32: {e}")
 
@@ -83,6 +116,27 @@ class SerialNode(Node):
         except Exception as e:
             self.get_logger().error(f"Error reading from STM32: {e}")
     
+    def read_gps_data(self):
+        """
+        Read GPS data from the GPS module.
+        Data format from GPS module: $GNRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A
+        """
+        try:
+            if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_GPS:
+                data = self.serial_gps_conn.readline().decode("utf-8").strip()
+                self.get_logger().info(f"Received GPS data::::: {data}")
+                # format the data to send to GUI
+                formatted_data = data.split(",")
+                frame_ = f"s:2:2:{formatted_data[3]}:{formatted_data[5]}:e"
+                self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
+
+                msg = String()
+                msg.data = frame_
+                self.publishers_.publish(msg)
+                # Process the received data or publish it to another ROS topic if needed
+        except Exception as e:
+            self.get_logger().error(f"Error reading GPS data: {e}")
+
     def send_follow_specs(self):
         """
         Send follow specs to STM32 in follow mode.
@@ -94,6 +148,46 @@ class SerialNode(Node):
                 self.serial_connection.write((frame_).encode("utf-8"))
         except Exception as e:
             self.get_logger().error(f"Error sending follow specs to STM32: {e}")
+
+    def send_gps_data(self):
+        """
+        Send GPS data to STM32.
+        """
+        try:
+            # Send GPS data to STM32
+            if self.SIGNAL_GPS:
+                frame_ = self.gps_data
+                self.get_logger().info(f"Sending GPS data to STM32:::: {frame_}")
+                self.serial_connection.write((frame_).encode("utf-8"))
+            pass
+        except Exception as e:
+            self.get_logger().error(f"Error sending GPS data to STM32: {e}")
+
+    def send_init_gps_lat_long(self):
+        """
+        Send initial GPS data to GUI.
+        """
+        try:
+            # if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_INIT_GPS:
+            #     data = self.serial_gps_conn.readline().decode("utf-8").strip()
+            #     self.get_logger().info(f"Received GPS data::::: {data}")
+            #     # format the data to send to GUI
+            #     formatted_data = data.split(",")
+            #     frame_ = f"s:3:2:{formatted_data[3]}:{formatted_data[5]}:e"
+            #     self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
+
+            #     msg = String()
+            #     msg.data = frame_
+            #     self.publishers_.publish(msg)
+            if self.SIGNAL_INIT_GPS:
+                frame_ = "s:3:2:1058.61276:10640.44881:e"
+                self.get_logger().info(f"Sending init GPS data to GUI: {frame_}")
+
+                msg = String()
+                msg.data = frame_
+                self.publishers_.publish(msg)
+        except Exception as e:
+            self.get_logger().error(f"Error sending init GPS data to GUI: {e}")
 
     def destroy_node(self):
         """
