@@ -12,6 +12,7 @@ services:
     devices:
       - "/dev/video0:/dev/video0"  # Map the camera's USB device to the container
       - "/dev/ttyUSB0:/dev/ttyUSB0"  # Map the Arduino's USB device to the container
+      - "/dev/ttyACM0:/dev/ttyACM0"  # Map the Arduino's USB device to the container
     environment:
       - PYTHONUNBUFFERED=1  # Ensures Python output is visible in real-time
       - DISPLAY=${DISPLAY}  # Set the display environment variable

@@ -19,17 +19,17 @@ class SerialNode(Node):
                                                , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
 
         # Serial gps configuration
-        self.serial_gps_port = "/dev/ttyUSB1"  # Update this to your GPS's port
+        self.serial_gps_port = "/dev/ttyACM0"  # Update this to your GPS's port
         self.baud_rate_gps = 38400
-        # self.serial_gps_conn = serial.Serial(
-        #     self.serial_gps_port,
-        #     self.baud_rate_gps,
-        #     timeout=0.1,
-        #     parity=serial.PARITY_NONE,
-        #     stopbits=serial.STOPBITS_ONE,
-        #     bytesize=serial.EIGHTBITS
-        # )
-        self.serial_gps_conn = None
+        self.serial_gps_conn = serial.Serial(
+            self.serial_gps_port,
+            self.baud_rate_gps,
+            timeout=1,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.EIGHTBITS
+        )
+        # self.serial_gps_conn = None
 
         # Specs for STM32
         self.specs = {
@@ -52,7 +52,7 @@ class SerialNode(Node):
         # ROS2 timers
         self.timer_ = self.create_timer(0.01, self.send_follow_specs)
         self.timer_receive_STM32_ = self.create_timer(0.01, self.read_from_stm32)
-        # self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
+        self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
         self.get_logger().info("Serial node has been started.")
         
 
@@ -168,24 +168,27 @@ class SerialNode(Node):
         Send initial GPS data to GUI.
         """
         try:
-            # if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_INIT_GPS:
-            #     data = self.serial_gps_conn.readline().decode("utf-8").strip()
-            #     self.get_logger().info(f"Received GPS data::::: {data}")
-            #     # format the data to send to GUI
-            #     formatted_data = data.split(",")
-            #     frame_ = f"s:3:2:{formatted_data[3]}:{formatted_data[5]}:e"
-            #     self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
-
-            #     msg = String()
-            #     msg.data = frame_
-            #     self.publishers_.publish(msg)
-            if self.SIGNAL_INIT_GPS:
-                frame_ = "s:3:2:1058.61276:10640.44881:e"
-                self.get_logger().info(f"Sending init GPS data to GUI: {frame_}")
+            if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_INIT_GPS:
+                data = self.serial_gps_conn.readline().decode("utf-8").strip()
+                self.get_logger().info(f"Received GPS data::::: {data}")
+                # format the data to send to GUI
+                formatted_data = data.split(",")
+                if not(formatted_data[0] == "$GNRMC"):
+                    self.get_logger().warn(f"Invalid GPS data::: {data}")
+                    return
+                frame_ = f"s:3:2:{formatted_data[3]}:{formatted_data[5]}:e"
+                self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
 
                 msg = String()
                 msg.data = frame_
                 self.publishers_.publish(msg)
+            # if self.SIGNAL_INIT_GPS:
+            #     frame_ = "s:3:2:1058.61276:10640.44881:e"
+            #     self.get_logger().info(f"Sending init GPS data to GUI: {frame_}")
+
+            #     msg = String()
+            #     msg.data = frame_
+            #     self.publishers_.publish(msg)
         except Exception as e:
             self.get_logger().error(f"Error sending init GPS data to GUI: {e}")
 
