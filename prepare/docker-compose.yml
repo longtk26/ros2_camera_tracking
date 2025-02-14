@@ -1,0 +1,8 @@
+version: '3.3'
+
+services:
+  base_ros_camera:
+    image: "base_image_ros"
+    build:
+      context: .
+      dockerfile: Dockerfile
