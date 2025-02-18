@@ -3,6 +3,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 import serial
+import ast
 
 class SerialNode(Node):
     def __init__(self):
@@ -156,12 +157,29 @@ class SerialNode(Node):
         try:
             # Send GPS data to STM32
             if self.SIGNAL_GPS:
-                frame_ = self.gps_data
-                self.get_logger().info(f"Sending GPS data to STM32:::: {frame_}")
-                self.serial_connection.write((frame_).encode("utf-8"))
-            pass
+                frame_ = self._convert_gps_data(self.gps_data)
+                for index, data in enumerate(frame_):
+                    frame_ = f"s:2:1:{data[0]}:{data[1]}:e"
+                    self.get_logger().info(f"Sending GPS data to STM32:::: {frame_}--{index+1}")
+                    self.serial_connection.write((frame_).encode("utf-8"))
         except Exception as e:
             self.get_logger().error(f"Error sending GPS data to STM32: {e}")
+
+    def _convert_gps_data(self, data):
+        """
+        Convert GPS data from string format to a list of tuples.
+        data: "len-[[lat, long], [lat, long], ...]"
+        """
+        try:
+            data = data.split("-", 1)[1] 
+            formatted_data = ast.literal_eval(data)  
+            
+            result = [[formatted_data[i], formatted_data[i+1]] for i in range(0, len(formatted_data), 2)]
+            self.get_logger().info(f"Len of GPS data:::: {len(result)}")
+            return result
+        except Exception as e:
+            self.get_logger().error(f"Error converting GPS data::: {e}")
+            return None
 
     def send_init_gps_lat_long(self):
         """

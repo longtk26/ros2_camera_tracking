@@ -49,7 +49,7 @@ class ImagePublishNode(Node):
             return
     
     def listener_callback(self, msg):
-        self.get_logger().info(f"Received message: {msg.data}")
+        # self.get_logger().info(f"Received message: {msg.data}")
         if msg.data == "start_follow":
             self.SIGNAL_PUBLISH_IMAGE = True
         elif msg.data == "stop_follow":
