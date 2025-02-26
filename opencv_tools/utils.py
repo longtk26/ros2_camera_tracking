@@ -20,7 +20,7 @@ class Utils:
 
         if h_new != 0:
             if node_detect.first_ratio == 0:
-                node_detect.pixel_to_meter_ratio = real_world_height / h_new
+                node_detect.pixel_to_meter_ratio = 0.0002645833
                 node_detect.get_logger().info(f"RATIO FIRST................{node_detect.pixel_to_meter_ratio}")
                 node_detect.first_ratio = 1
 

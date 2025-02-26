@@ -15,7 +15,7 @@ class SerialNode(Node):
 
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
-        self.baud_rate = 19200
+        self.baud_rate = 115200
         self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=0.001
                                                , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
 
@@ -125,18 +125,27 @@ class SerialNode(Node):
         try:
             if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_GPS:
                 data = self.serial_gps_conn.readline().decode("utf-8").strip()
-                self.get_logger().info(f"Received GPS data::::: {data}")
-                # format the data to send to GUI
-                formatted_data = data.split(",")
-                frame_ = f"s:2:2:{formatted_data[3]}:{formatted_data[5]}:e"
-                self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
+                self.get_logger().info(f"RAW DATA:::: {data}")
 
+                # format the data to handle
+                formatted_data = data.split(",")
+
+                # Send the data to STM32
+                lat = self._convert_to_coors_map(formatted_data[3])
+                long = self._convert_to_coors_map(formatted_data[5])
+                _frame_stm32 = f"s:{lat}:{long}:e"
+                self.get_logger().info(f"Sending GPS [FOLLLOW] data to STM32:::: {_frame_stm32}")
+
+                self.serial_connection.write((_frame_stm32).encode("utf-8"))
+
+                # Send the data to GUI
+                frame_ = f"s:2:2:{formatted_data[3]}:{formatted_data[5]}:e"
                 msg = String()
                 msg.data = frame_
                 self.publishers_.publish(msg)
-                # Process the received data or publish it to another ROS topic if needed
+
         except Exception as e:
-            self.get_logger().error(f"Error reading GPS data: {e}")
+            self.get_logger().error(f"Error reading GPS data or sending stm32 error: {e}")
 
     def send_follow_specs(self):
         """
@@ -158,10 +167,17 @@ class SerialNode(Node):
             # Send GPS data to STM32
             if self.SIGNAL_GPS:
                 frame_ = self._convert_gps_data(self.gps_data)
+                full_frame = ""
+                full_points = 0
                 for index, data in enumerate(frame_):
                     frame_ = f"s:2:1:{data[0]}:{data[1]}:e"
-                    self.get_logger().info(f"Sending GPS data to STM32:::: {frame_}--{index+1}")
-                    self.serial_connection.write((frame_).encode("utf-8"))
+                    full_frame += frame_
+                    full_points = index
+
+                full_frame += "E"
+                self.serial_connection.write((full_frame).encode("utf-8"))
+                self.get_logger().info(f"Sending GPS data to STM32:::: {full_frame}")
+                self.get_logger().info(f"Total points:::: {full_points + 1}")
         except Exception as e:
             self.get_logger().error(f"Error sending GPS data to STM32: {e}")
 
@@ -181,6 +197,13 @@ class SerialNode(Node):
             self.get_logger().error(f"Error converting GPS data::: {e}")
             return None
 
+    def _convert_to_coors_map(self, data):
+        dataNumber = float(data) 
+        deg = int(dataNumber/100)
+        minutes = dataNumber - (deg * 100)
+
+        return deg + minutes/60
+
     def send_init_gps_lat_long(self):
         """
         Send initial GPS data to GUI.
@@ -188,14 +211,14 @@ class SerialNode(Node):
         try:
             if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_INIT_GPS:
                 data = self.serial_gps_conn.readline().decode("utf-8").strip()
-                self.get_logger().info(f"Received GPS data::::: {data}")
+                # self.get_logger().info(f"Received GPS data::::: {data}")
                 # format the data to send to GUI
                 formatted_data = data.split(",")
                 if not(formatted_data[0] == "$GNRMC"):
                     self.get_logger().warn(f"Invalid GPS data::: {data}")
                     return
                 frame_ = f"s:3:2:{formatted_data[3]}:{formatted_data[5]}:e"
-                self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
+                # self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
 
                 msg = String()
                 msg.data = frame_
@@ -208,7 +231,8 @@ class SerialNode(Node):
             #     msg.data = frame_
             #     self.publishers_.publish(msg)
         except Exception as e:
-            self.get_logger().error(f"Error sending init GPS data to GUI: {e}")
+            # self.get_logger().error(f"Error sending init GPS data to GUI: {e}")
+            pass
 
     def destroy_node(self):
         """
