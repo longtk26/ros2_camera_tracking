@@ -126,9 +126,13 @@ class SerialNode(Node):
             if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_GPS:
                 data = self.serial_gps_conn.readline().decode("utf-8").strip()
                 self.get_logger().info(f"RAW DATA:::: {data}")
+                
 
                 # format the data to handle
                 formatted_data = data.split(",")
+                if formatted_data[0] == "$GNTXT":
+                    self.get_logger().info(f"Passs GNTXT")
+                    return
 
                 # Send the data to STM32
                 lat = self._convert_to_coors_map(formatted_data[3])
@@ -197,12 +201,18 @@ class SerialNode(Node):
             self.get_logger().error(f"Error converting GPS data::: {e}")
             return None
 
-    def _convert_to_coors_map(self, data):
-        dataNumber = float(data) 
-        deg = int(dataNumber/100)
-        minutes = dataNumber - (deg * 100)
+    def _convert_to_coors_map(self, data: str) -> str:
+        try:
+            dataNumber = float(data) 
+            deg = int(dataNumber / 100)
+            minutes = dataNumber - (deg * 100)
 
-        return deg + minutes/60
+            result = deg + minutes / 60
+            # Định dạng số với chính xác 15 chữ số sau dấu thập phân
+            return f"{result:.15f}"
+        except ValueError:
+            self.get_logger().error(f"Invalid coordinate value: {data}")
+            return "0.000000000000000"  # Giá trị mặc định khi lỗi
 
     def send_init_gps_lat_long(self):
         """
