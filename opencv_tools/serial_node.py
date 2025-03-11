@@ -47,13 +47,18 @@ class SerialNode(Node):
             10
         )
         self.subscription_follow_specs_ = self.create_subscription(Twist, "follow_specs", self.handle_follow_specs, 10)
+        self.subscription_standley_output = self.create_subscription(String, "standley_output", self.handle_standley_output, 10)
+        
+        # ROS2 publishers
         self.publishers_ = self.create_publisher(String, "stm32_topic", 10)
+        self.publisher_gps = self.create_publisher(String, "gps_topic", 10)
 
 
         # ROS2 timers
-        self.timer_ = self.create_timer(0.01, self.send_follow_specs)
+        # self.timer_ = self.create_timer(0.01, self.send_follow_specs)
         self.timer_receive_STM32_ = self.create_timer(0.01, self.read_from_stm32)
         self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
+        # self.timer_read_gps_ = self.create_timer(1, self.read_gps_data_2)
         self.get_logger().info("Serial node has been started.")
         
 
@@ -61,9 +66,7 @@ class SerialNode(Node):
         """
         Callback to handle messages from the ROS2 topic and send to STM32.
         """
-        self.get_logger().info(f"===SIGNAL FROM UI CONTROL=== {msg.data}")
         node_received = msg.data.split(" ")[0]
-        self.get_logger().info(f"===NODE RECEIVED=== {node_received}")
         try:
             if msg.data == "start_follow":
                 self.SIGNAL_FOLLOW_SPECS = True
@@ -76,9 +79,14 @@ class SerialNode(Node):
                 self.specs["speed"] = 0
                 self.specs["angle"] = 0
             elif node_received == "[serial]":
+                self.get_logger().info(f"===[Serial Node] SIGNAL FROM UI CONTROL=== {msg.data}")
                 self.SIGNAL_FOLLOW_SPECS = False
                 self.gps_data = msg.data.split(" ")[1]
-                if not(self.gps_data == "find-me"):
+                if self.gps_data == "request-imu":
+                    self.SIGNAL_GPS = True
+                    self.SIGNAL_INIT_GPS = False
+                    self.send_request_imu_to_stm32()
+                elif not(self.gps_data == "find-me"):
                     self.SIGNAL_GPS = True
                     self.SIGNAL_INIT_GPS = False
                     self.send_gps_data()
@@ -100,6 +108,17 @@ class SerialNode(Node):
             self.specs["angle"] = f"{msg.angular.z:.3f}"
         except Exception as e:
             self.get_logger().error(f"Error sending follow specs to STM32: {e}")
+
+    def handle_standley_output(self, msg):
+        """
+        Callback to handle standley output messages.
+        """
+        try:
+            frame_stm32 = msg.data
+            self.serial_connection.write((frame_stm32).encode("utf-8"))
+            self.get_logger().info(f"Sending standley output to STM32: {frame_stm32}")
+        except Exception as e:
+            self.get_logger().error(f"Error sending standley output to STM32: {e}")
 
     def read_from_stm32(self):
         """
@@ -126,7 +145,6 @@ class SerialNode(Node):
             if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_GPS:
                 data = self.serial_gps_conn.readline().decode("utf-8").strip()
                 self.get_logger().info(f"RAW DATA:::: {data}")
-                
 
                 # format the data to handle
                 formatted_data = data.split(",")
@@ -134,19 +152,21 @@ class SerialNode(Node):
                     self.get_logger().info(f"Passs GNTXT")
                     return
 
-                # Send the data to STM32
-                lat = self._convert_to_coors_map(formatted_data[3])
-                long = self._convert_to_coors_map(formatted_data[5])
-                _frame_stm32 = f"s:{lat}:{long}:e"
-                self.get_logger().info(f"Sending GPS [FOLLLOW] data to STM32:::: {_frame_stm32}")
-
-                self.serial_connection.write((_frame_stm32).encode("utf-8"))
-
                 # Send the data to GUI
                 frame_ = f"s:2:2:{formatted_data[3]}:{formatted_data[5]}:e"
                 msg = String()
                 msg.data = frame_
                 self.publishers_.publish(msg)
+
+                # Send the data to GPS topic
+                lat = self._convert_to_coors_map(formatted_data[3])
+                long = self._convert_to_coors_map(formatted_data[5])
+                msg_gps = String()
+                msg_gps.data = f"running:{lat}:{long}"
+                self.publisher_gps.publish(msg_gps)
+
+        except Exception as e:
+            self.get_logger().error(f"Error reading GPS data or sending stm32 error: {e}")
 
         except Exception as e:
             self.get_logger().error(f"Error reading GPS data or sending stm32 error: {e}")
@@ -179,11 +199,22 @@ class SerialNode(Node):
                     full_points = index
 
                 full_frame += "E"
-                self.serial_connection.write((full_frame).encode("utf-8"))
                 self.get_logger().info(f"Sending GPS data to STM32:::: {full_frame}")
+                self.serial_connection.write((full_frame).encode("utf-8"))
                 self.get_logger().info(f"Total points:::: {full_points + 1}")
         except Exception as e:
             self.get_logger().error(f"Error sending GPS data to STM32: {e}")
+
+    def send_request_imu_to_stm32(self):
+        """
+        Send request to STM32 to get IMU data.
+        """
+        try:
+            frame_ = "s:2:S:e"
+            self.serial_connection.write((frame_).encode("utf-8"))
+            self.get_logger().info(f"Sending request IMU to STM32:::: {frame_}")
+        except Exception as e:
+            self.get_logger().error(f"Error sending request IMU to STM32: {e}")
 
     def _convert_gps_data(self, data):
         """
@@ -227,19 +258,19 @@ class SerialNode(Node):
                 if not(formatted_data[0] == "$GNRMC"):
                     self.get_logger().warn(f"Invalid GPS data::: {data}")
                     return
+                
+                # Send the data to GPS topic
+                lat = self._convert_to_coors_map(formatted_data[3])
+                long = self._convert_to_coors_map(formatted_data[5])
+                msg_gps = String()
+                msg_gps.data = f"init:{lat}:{long}"
+                self.publisher_gps.publish(msg_gps)
+                
+                # Send the data to GUI
                 frame_ = f"s:3:2:{formatted_data[3]}:{formatted_data[5]}:e"
-                # self.get_logger().info(f"Sending GPS data to GUI:::: {frame_}")
-
                 msg = String()
                 msg.data = frame_
                 self.publishers_.publish(msg)
-            # if self.SIGNAL_INIT_GPS:
-            #     frame_ = "s:3:2:1058.61276:10640.44881:e"
-            #     self.get_logger().info(f"Sending init GPS data to GUI: {frame_}")
-
-            #     msg = String()
-            #     msg.data = frame_
-            #     self.publishers_.publish(msg)
         except Exception as e:
             # self.get_logger().error(f"Error sending init GPS data to GUI: {e}")
             pass

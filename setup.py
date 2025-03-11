@@ -27,6 +27,7 @@ setup(
             'object_detection_node = opencv_tools.object_detection_node:main',
             'image_publish_node = opencv_tools.image_pub_node:main',
             'serial_node = opencv_tools.serial_node:main',
+            'standley_node = opencv_tools.standley_node:main',
         ],
     },
 )

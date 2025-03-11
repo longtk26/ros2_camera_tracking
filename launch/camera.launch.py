@@ -37,10 +37,16 @@ def generate_launch_description():
         executable="serial_node",
     )
 
+    standley_node = Node(
+        package="opencv_tools",
+        executable="standley_node",
+    )
+
     return LaunchDescription([
-        publish_image_node,
-        detect_tracking_node,
+        # publish_image_node,
+        # detect_tracking_node,
         serial_node,
+        standley_node,
         rosbridge_server,
         # socket_node
     ])

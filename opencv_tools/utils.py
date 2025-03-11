@@ -1,4 +1,5 @@
 import numpy as np
+import ast
 import cv2
 
 class Utils:
@@ -105,3 +106,19 @@ class Utils:
             cv2.putText(current_frame, angle_text, position_text, font, font_scale, color, thickness)
 
         return angle
+    
+    def convert_gps_data(self, context, data):
+        """
+        Convert GPS data from string format to a list of tuples.
+        data: "len-[[lat, long], [lat, long], ...]"
+        """
+        try:
+            data = data.split("-", 1)[1] 
+            formatted_data = ast.literal_eval(data)  
+            
+            result = [[formatted_data[i], formatted_data[i+1]] for i in range(0, len(formatted_data), 2)]
+            context.get_logger().info(f"Len of GPS data:::: {len(result)}")
+            return result
+        except Exception as e:
+            context.get_logger().error(f"Error converting GPS data::: {e}")
+            return None
