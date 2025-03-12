@@ -92,6 +92,7 @@ class StandleyNode(Node):
         self.x_current, self.y_current = self.__convert_lat_lon_to_xy(lat=float(self.lat_current), lon=float(self.lon_current))
         if self.START_STANDLEY_ALGORITHM:
            delta, distance_to_goal, min_distance = self.__run_standley_algorithm()
+           self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}")
            self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}")
 
 

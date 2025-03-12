@@ -136,7 +136,7 @@ class SerialNode(Node):
         try:
             if self.standley_output_msg:
                 self.serial_connection.write((self.standley_output_msg).encode("utf-8"))
-                self.get_logger().info(f"Sending standley output to STM32:::: {self.standley_output_msg}")
+                # self.get_logger().info(f"Sending standley output to STM32:::: {self.standley_output_msg}")
         except Exception as e:
             self.get_logger().error(f"Error sending standley output to STM32: {e}")
 
@@ -147,7 +147,7 @@ class SerialNode(Node):
         try:
             if self.serial_connection.in_waiting > 0:
                 data = self.serial_connection.readline().decode("utf-8").strip()
-                self.get_logger().info(f"Received from STM32::::: {data}")
+                # self.get_logger().info(f"Received from STM32::::: {data}")
                 # Publish the received data to another ROS topic
                 msg = String()
                 msg.data = data
@@ -164,7 +164,7 @@ class SerialNode(Node):
         try:
             if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_GPS:
                 data = self.serial_gps_conn.readline().decode("utf-8").strip()
-                self.get_logger().info(f"RAW DATA:::: {data}")
+                # self.get_logger().info(f"RAW DATA:::: {data}")
 
                 # format the data to handle
                 formatted_data = data.split(",")
