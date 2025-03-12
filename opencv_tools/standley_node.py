@@ -103,7 +103,7 @@ class StandleyNode(Node):
         """
         self.angle_imu = self.__check_msg_stm32_is_valid_and_return_data(msg.data)
         if self.angle_imu:
-            self.get_logger().info(f"Angle IMU:::::: {self.angle_imu}")
+            # self.get_logger().info(f"Angle IMU:::::: {self.angle_imu}")
             pass
         
     def __run_standley_algorithm(self):
@@ -211,7 +211,7 @@ class StandleyNode(Node):
             e: end
         """
         try:
-            self.get_logger().info(f"STM32 msg received in standley: {msg}")
+            # self.get_logger().info(f"STM32 msg received in standley: {msg}")
             node_received = msg.split(":")[1]
             if node_received != "4":
                 return False
