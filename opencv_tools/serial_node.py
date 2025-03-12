@@ -154,6 +154,7 @@ class SerialNode(Node):
                 self.publishers_.publish(msg)
                 # Process the received data or publish it to another ROS topic if needed
         except Exception as e:
+            self.serial_connection.write("s:2:E:e".encode("utf-8"))
             self.get_logger().error(f"Error reading from STM32: {e}")
     
     def read_gps_data(self):
@@ -301,7 +302,6 @@ class SerialNode(Node):
         Cleanup resources on shutdown.
         """
         self.get_logger().info("Shutting down node...")
-        self.serial_connection.write("s:2:E:e".encode("utf-8"))
         self.serial_connection.close()
         super().destroy_node()
 
