@@ -212,12 +212,17 @@ class StandleyNode(Node):
             <angle>: angle value
             e: end
         """
-        node_received = msg.split(":")[1]
-        if node_received != "4":
+        try:
+            self.get_logger().info(f"STM32 msg received in standley: {msg}")
+            node_received = msg.split(":")[1]
+            if node_received != "4":
+                return False
+            
+            data_received = msg.split(":")[2]
+            return data_received
+        except Exception as e:
+            self.get_logger().error(f"Error check msg stm32: {e}")
             return False
-        
-        data_received = msg.split(":")[2]
-        return data_received
     
 
     def __publish_msg(self, type_msg="stm32", data=""):
