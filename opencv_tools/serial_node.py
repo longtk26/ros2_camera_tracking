@@ -16,7 +16,7 @@ class SerialNode(Node):
 
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
-        self.baud_rate = 115200
+        self.baud_rate = 9600
         self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=0.001
                                                , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
 
