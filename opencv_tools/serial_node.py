@@ -285,6 +285,7 @@ class SerialNode(Node):
                 msg_gps = String()
                 msg_gps.data = f"init:{lat}:{long}"
                 self.publisher_gps.publish(msg_gps)
+                self.get_logger().info(f"Init GPS data:::: {msg_gps.data}")
                 
                 # Send the data to GUI
                 frame_ = f"s:3:2:{formatted_data[3]}:{formatted_data[5]}:e"
