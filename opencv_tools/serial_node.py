@@ -145,7 +145,7 @@ class SerialNode(Node):
         Continuously read from STM32 and handle the data.
         """
         try:
-            if self.serial_connection.in_waiting > 0:
+            if self.serial_connection.in_waiting > 0 and self.SIGNAL_GPS:
                 data = self.serial_connection.readline().decode("utf-8").strip()
                 # self.get_logger().info(f"Received from STM32::::: {data}")
                 # Publish the received data to another ROS topic
