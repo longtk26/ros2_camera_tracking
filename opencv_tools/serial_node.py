@@ -301,6 +301,7 @@ class SerialNode(Node):
         Cleanup resources on shutdown.
         """
         self.get_logger().info("Shutting down node...")
+        self.serial_connection.write("s:2:E:e".encode("utf-8"))
         self.serial_connection.close()
         super().destroy_node()
 
