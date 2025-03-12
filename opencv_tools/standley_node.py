@@ -93,8 +93,9 @@ class StandleyNode(Node):
         self.x_current, self.y_current = self.__convert_lat_lon_to_xy(lat=float(self.lat_current), lon=float(self.lon_current))
         if self.START_STANDLEY_ALGORITHM:
            delta, distance_to_goal, min_distance = self.__run_standley_algorithm()
-           self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}")
-           self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}")
+           angle_imu_rad = math.radians(float(self.angle_imu))
+           self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}")
+           self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}")
 
 
     def stm32_callback(self, msg):
@@ -141,7 +142,7 @@ class StandleyNode(Node):
         
         # Step 4: Compute heading error theta_e
         heading_ref = math.atan2(self.x_y_coordinates[j + 1][1] - self.y_current, self.x_y_coordinates[j + 1][0] - self.x_current)
-        heading_robot = float(self.angle_imu)
+        heading_robot = math.radians(float(self.angle_imu))
         theta_e = heading_ref - heading_robot
         
         

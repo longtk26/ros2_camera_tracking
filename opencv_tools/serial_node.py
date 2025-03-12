@@ -16,7 +16,7 @@ class SerialNode(Node):
 
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
-        self.baud_rate = 9600
+        self.baud_rate = 115200
         self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=0.001
                                                , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
 
@@ -134,7 +134,7 @@ class SerialNode(Node):
         Send standley output to STM32.
         """
         try:
-            if self.standley_output_msg:
+            if self.standley_output_msg and self.SIGNAL_GPS:
                 self.serial_connection.write((self.standley_output_msg).encode("utf-8"))
                 # self.get_logger().info(f"Sending standley output to STM32:::: {self.standley_output_msg}")
         except Exception as e:
@@ -147,14 +147,16 @@ class SerialNode(Node):
         try:
             if self.serial_connection.in_waiting > 0 and self.SIGNAL_GPS:
                 data = self.serial_connection.readline().decode("utf-8").strip()
-                # self.get_logger().info(f"Received from STM32::::: {data}")
+                if not("s" in data) or not("e" in data):
+                    self.get_logger().info(f"Invalid data from STM32:::: {data}")
+                    return
+
                 # Publish the received data to another ROS topic
                 msg = String()
                 msg.data = data
                 self.publishers_.publish(msg)
                 # Process the received data or publish it to another ROS topic if needed
         except Exception as e:
-            self.serial_connection.write("s:2:E:e".encode("utf-8"))
             self.get_logger().error(f"Error reading from STM32: {e}")
     
     def read_gps_data(self):
@@ -287,7 +289,6 @@ class SerialNode(Node):
                 msg_gps.data = f"init:{lat}:{long}"
                 self.publisher_gps.publish(msg_gps)
                 self.get_logger().info(f"Init GPS data:::: {msg_gps.data}")
-                self.serial_connection.write("s:2:E:e".encode("utf-8")) # Stop sending from stm32
                 
                 # Send the data to GUI
                 frame_ = f"s:3:2:{formatted_data[3]}:{formatted_data[5]}:e"
