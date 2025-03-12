@@ -86,7 +86,7 @@ class StandleyNode(Node):
             self.ref_lat = float(self.lat_current)
             self.ref_lon = float(self.lon_current)
             self.get_logger().info(f"Initalized GPS ref: {self.ref_lat}, {self.ref_lon}")
-            self.__publish_msg(type_msg="stm32", data=None)  # Start the robot
+            self.__publish_msg(type_msg="stm32", data="E")  # Start the robot
             return
 
         # Convert current GPS data to x, y coordinates
