@@ -58,7 +58,7 @@ class SerialNode(Node):
         # self.timer_ = self.create_timer(0.01, self.send_follow_specs)
         self.timer_receive_STM32_ = self.create_timer(0.01, self.read_from_stm32)
         self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
-        # self.timer_read_gps_ = self.create_timer(1, self.read_gps_data_2)
+        self.timer_send_standley_output = self.create_timer(0.01, self.send_standley_output)
         self.get_logger().info("Serial node has been started.")
         
 
@@ -113,10 +113,22 @@ class SerialNode(Node):
         """
         Callback to handle standley output messages.
         """
+        is_send_to_stm32 = False
+        signal = msg.data.split(":")[1]
+        if signal == "2":
+            is_send_to_stm32 = True
+        
+        if is_send_to_stm32:
+            self.standley_output_msg = msg.data
+
+    def send_standley_output(self):
+        """
+        Send standley output to STM32.
+        """
         try:
-            frame_stm32 = msg.data
-            self.serial_connection.write((frame_stm32).encode("utf-8"))
-            self.get_logger().info(f"Sending standley output to STM32: {frame_stm32}")
+            if self.standley_output_msg:
+                self.serial_connection.write((self.standley_output_msg).encode("utf-8"))
+                self.get_logger().info(f"Sending standley output to STM32:::: {self.standley_output_msg}")
         except Exception as e:
             self.get_logger().error(f"Error sending standley output to STM32: {e}")
 

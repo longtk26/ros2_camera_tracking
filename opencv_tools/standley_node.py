@@ -91,7 +91,9 @@ class StandleyNode(Node):
         # Convert current GPS data to x, y coordinates
         self.x_current, self.y_current = self.__convert_lat_lon_to_xy(lat=float(self.lat_current), lon=float(self.lon_current))
         if self.START_STANDLEY_ALGORITHM:
-            self.__run_standley_algorithm()
+           delta, distance_to_goal, min_distance = self.__run_standley_algorithm()
+           self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}")
+
 
     def stm32_callback(self, msg):
         """
@@ -113,6 +115,7 @@ class StandleyNode(Node):
         goal_x, goal_y = self.x_y_coordinates[-1]  # Last point on the trajectory
         distance_to_goal = math.sqrt((goal_x - self.x_current) ** 2 + (goal_y - self.y_current) ** 2)
         if distance_to_goal < 0.05:
+            self.__publish_msg(type_msg="stm32", data="E")  # Stop the robot           
             self.get_logger().info("Goal reached. Stopping robot.")
             return
 
@@ -135,7 +138,7 @@ class StandleyNode(Node):
         e_t = min_distance
         
         # Step 4: Compute heading error theta_e
-        heading_ref = math.atan2(self.x_y_coordinates[j + 1][1] - y_ref, self.x_y_coordinates[j + 1][0] - x_ref)
+        heading_ref = math.atan2(self.x_y_coordinates[j + 1][1], self.x_y_coordinates[j + 1][0])
         heading_robot = float(self.angle_imu)
         theta_e = heading_ref - heading_robot
         
@@ -143,22 +146,25 @@ class StandleyNode(Node):
         theta_e = math.atan2(math.sin(theta_e), math.cos(theta_e))
         
         # Step 5: Compute control angle delta
-        k = 1.2  # Gain parameter for crosstrack error
-        ksoft = 0.1  # Small positive constant to avoid instability at low speed
-        v = 1.0  # Assume velocity is 1.0 m/s (adjust if real velocity is available)
+        k = 10  # Gain parameter for crosstrack error
+        ksoft = 10  # Small positive constant to avoid instability at low speed
+        v = 0.5  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
         theta_d = math.atan2(k * e_t, ksoft + v)
         
         # Compute final steering angle
-        delta = theta_e + theta_d
-        delta = math.radians(delta)  # Convert back to radians
+        theta_position = math.atan2(self.y_current, self.x_current)
+        if theta_position < heading_ref:
+            delta = theta_e + theta_d
+        else:
+            delta = theta_e - theta_d
+        #delta = math.radians(delta)  # Convert back to radians
         delta = max(-math.pi, min(math.pi, delta))  # Clamp within range
 
         # Publish result
-        frame = f"s:2:{delta}:e"
-        msg = String()
-        msg.data = frame
-        self.publisher_standley_algorithm.publish(msg)
+        self.__publish_msg(type_msg="stm32", data=delta)
         self.get_logger().info(f"Published steering angle: {delta} radians")
+
+        return delta, distance_to_goal, min_distance
    
     
     def __convert_lat_lon_to_xy(self, lat, lon):
@@ -213,6 +219,19 @@ class StandleyNode(Node):
         data_received = msg.split(":")[2]
         return data_received
     
+
+    def __publish_msg(self, type_msg="stm32", data=""):
+        """
+        Publish message to the topic.
+        """
+        store = {
+            "stm32": f"s:2:{data}:e",
+            "ui": f"s:4:{data}:e"   # Node 4 is Standley node on UI: s:4:delta:distance_to_goal:min_distance:e
+        }
+        msg = String()
+        msg.data = store[type_msg]
+        self.publisher_standley_algorithm.publish(msg)
+
     def destroy_node(self):
         """
         Cleanup resources on shutdown.
