@@ -232,7 +232,7 @@ class StandleyNode(Node):
         """
         store = {
             "stm32": f"s:2:{data}:e",
-            "ui": f"s:4:{data}:e"   # Node 4 is Standley node on UI: s:4:delta:distance_to_goal:min_distance:e
+            "ui": f"s:5:{data}:e"   # Node 4 is Standley node on UI: s:4:delta:distance_to_goal:min_distance:e
         }
         msg = String()
         msg.data = store[type_msg]
