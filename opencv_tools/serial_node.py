@@ -12,6 +12,7 @@ class SerialNode(Node):
         self.SIGNAL_FOLLOW_SPECS = False
         self.SIGNAL_GPS = False
         self.SIGNAL_INIT_GPS = False
+        self.standley_output_msg = None
 
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
