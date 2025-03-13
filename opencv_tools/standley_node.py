@@ -96,7 +96,7 @@ class StandleyNode(Node):
             if self.START_STANDLEY_ALGORITHM:
                 delta, distance_to_goal, min_distance, heading_ref, theta_d = self.__run_standley_algorithm()
                 angle_imu_rad = math.radians(float(self.angle_imu))
-                self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}")
+                self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
                 self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}")
         except Exception as e:
             self.get_logger().error(f"Error in handle gps callback: {e}")
