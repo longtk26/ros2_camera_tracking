@@ -212,7 +212,7 @@ class StandleyNode(Node):
             e: end
         """
         try:
-            # self.get_logger().info(f"STM32 msg received in standley: {msg}")
+            self.get_logger().info(f"STM32 msg received in standley: {msg}")
             node_received = msg.split(":")[1]
             if node_received != "4":
                 return False
