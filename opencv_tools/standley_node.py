@@ -141,6 +141,7 @@ class StandleyNode(Node):
             # x_ref, y_ref, j = closest_point
             self.current, min_distance = self.find_closest_in_window(self.x_current, self.y_current, self.x_y_coordinates, self.current, 10)
             j = self.current
+            self.get_logger().info(f"Closest point [{j}]: {self.x_y_coordinates[j]}")
             
             # Step 3: Compute crosstrack error e(t)
             e_t = min_distance
@@ -247,7 +248,7 @@ class StandleyNode(Node):
             if node_received != "4":
                 return self.angle_imu, False
             
-            self.get_logger().info(f"STM32 msg received in standley: {msg}")
+            # self.get_logger().info(f"STM32 msg received in standley: {msg}")
             data_received = msg.split(":")[2]
             return data_received, True
         except Exception as e:
