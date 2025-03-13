@@ -14,7 +14,7 @@ class StandleyNode(Node):
     def __init__(self):
         super().__init__("standley_node")
         # Initialize variables
-        self.EARTH_RADIUS = 6378137.0
+        self.EARTH_RADIUS = 6371000
         self.START_STANDLEY_ALGORITHM = False
         self.ref_lat = 10.882168240297924   
         self.ref_lon = 106.80561693651214
