@@ -104,7 +104,7 @@ class StandleyNode(Node):
         """
         self.angle_imu = self.__check_msg_stm32_is_valid_and_return_data(msg.data)
         if self.angle_imu:
-            # self.get_logger().info(f"Angle IMU:::::: {self.angle_imu}")
+            self.get_logger().info(f"Angle IMU:::::: {self.angle_imu}")
             pass
         
     def __run_standley_algorithm(self):

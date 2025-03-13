@@ -145,7 +145,7 @@ class SerialNode(Node):
         Continuously read from STM32 and handle the data.
         """
         try:
-            if self.serial_connection.in_waiting > 0 and self.SIGNAL_GPS:
+            if self.serial_connection.in_waiting > 0:
                 data = self.serial_connection.readline().decode("utf-8").strip()
                 if not("s" in data) or not("e" in data):
                     self.get_logger().info(f"Invalid data from STM32:::: {data}")
