@@ -102,8 +102,8 @@ class StandleyNode(Node):
         """
         Callback function for STM32 data.
         """
-        self.angle_imu = self.__check_msg_stm32_is_valid_and_return_data(msg.data)
-        if self.angle_imu:
+        self.angle_imu, is_valid = self.__check_msg_stm32_is_valid_and_return_data(msg.data)
+        if is_valid:
             # self.get_logger().info(f"Angle IMU:::::: {self.angle_imu}")
             pass
         
@@ -215,10 +215,10 @@ class StandleyNode(Node):
             self.get_logger().info(f"STM32 msg received in standley: {msg}")
             node_received = msg.split(":")[1]
             if node_received != "4":
-                return False
+                return self.angle_imu, False
             
             data_received = msg.split(":")[2]
-            return data_received
+            return data_received, True
         except Exception as e:
             self.get_logger().error(f"Error check msg stm32: {e}")
             return False
