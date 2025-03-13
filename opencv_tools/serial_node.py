@@ -134,7 +134,7 @@ class SerialNode(Node):
         Send standley output to STM32.
         """
         try:
-            if self.standley_output_msg and self.SIGNAL_GPS:
+            if (self.standley_output_msg and self.SIGNAL_GPS) or (self.standley_output_msg and self.SIGNAL_INIT_GPS):
                 self.serial_connection.write((self.standley_output_msg).encode("utf-8"))
                 # self.get_logger().info(f"Sending standley output to STM32:::: {self.standley_output_msg}")
         except Exception as e:
