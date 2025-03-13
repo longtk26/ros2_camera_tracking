@@ -91,13 +91,14 @@ class StandleyNode(Node):
 
         # Convert current GPS data to x, y coordinates
         self.x_current, self.y_current = self.__convert_lat_lon_to_xy(lat=float(self.lat_current), lon=float(self.lon_current))
-        if self.START_STANDLEY_ALGORITHM:
-           delta, distance_to_goal, min_distance = self.__run_standley_algorithm()
-           angle_imu_rad = math.radians(float(self.angle_imu))
-           self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X: {self.x_current}, Y: {self.y_current}")
-           self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}")
-
-
+        try:
+            if self.START_STANDLEY_ALGORITHM:
+                delta, distance_to_goal, min_distance = self.__run_standley_algorithm()
+                angle_imu_rad = math.radians(float(self.angle_imu))
+                self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X: {self.x_current}, Y: {self.y_current}")
+                self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}")
+        except Exception as e:
+            self.get_logger().error(f"Error in handle gps callback: {e}")
     def stm32_callback(self, msg):
         """
         Callback function for STM32 data.
@@ -111,59 +112,62 @@ class StandleyNode(Node):
         """
         Run Stanley algorithm to calculate the steering angle.
         """
-        if not self.x_y_coordinates or not hasattr(self, 'x_current') or not hasattr(self, 'y_current'):
-            return
+        try:
+            if not self.x_y_coordinates or not hasattr(self, 'x_current') or not hasattr(self, 'y_current'):
+                return
 
-        # Step 1: Check if the robot has reached the final goal
-        goal_x, goal_y = self.x_y_coordinates[-1]  # Last point on the trajectory
-        distance_to_goal = math.sqrt((goal_x - self.x_current) ** 2 + (goal_y - self.y_current) ** 2)
-        if distance_to_goal < 0.05:
-            self.__publish_msg(type_msg="stm32", data="E")  # Stop the robot           
-            self.get_logger().info("Goal reached. Stopping robot.")
-            return
+            # Step 1: Check if the robot has reached the final goal
+            goal_x, goal_y = self.x_y_coordinates[-1]  # Last point on the trajectory
+            distance_to_goal = math.sqrt((goal_x - self.x_current) ** 2 + (goal_y - self.y_current) ** 2)
+            if distance_to_goal < 0.05:
+                self.__publish_msg(type_msg="stm32", data="E")  # Stop the robot           
+                self.get_logger().info("Goal reached. Stopping robot.")
+                return
 
-        # Step 2: Find the reference point (closest point on the path)
-        min_distance = float('inf')
-        closest_point = None
-        for i in range(len(self.x_y_coordinates) - 10):
-            for j in range(i, i + 10):  # Search next 10 points
-                x_ref, y_ref = self.x_y_coordinates[j]
-                distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_point = (x_ref, y_ref, j)
-        
-        if closest_point is None:
-            return
-        x_ref, y_ref, j = closest_point
-        
-        # Step 3: Compute crosstrack error e(t)
-        e_t = min_distance
-        
-        # Step 4: Compute heading error theta_e
-        heading_ref = math.atan2(self.x_y_coordinates[j + 1][1] - self.y_current, self.x_y_coordinates[j + 1][0] - self.x_current)
-        heading_robot = math.radians(float(self.angle_imu))
-        theta_e = heading_ref - heading_robot
-        
-        
-        # Step 5: Compute control angle delta
-        k = 1  # Gain parameter for crosstrack error
-        ksoft = 0.1  # Small positive constant to avoid instability at low speed
-        v = 0.3  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
-        theta_d = math.atan2(k * e_t, ksoft + v)
-        
-        # Compute final steering angle
-        # theta_position = math.atan2(self.y_current, self.x_current)
-        if heading_robot < heading_ref:
-            delta = theta_e - theta_d
-        else:
-            delta = theta_e + theta_d
+            # Step 2: Find the reference point (closest point on the path)
+            min_distance = float('inf')
+            closest_point = None
+            for i in range(len(self.x_y_coordinates) - 10):
+                for j in range(i, i + 10):  # Search next 10 points
+                    x_ref, y_ref = self.x_y_coordinates[j]
+                    distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_point = (x_ref, y_ref, j)
+            
+            if closest_point is None:
+                return
+            x_ref, y_ref, j = closest_point
+            
+            # Step 3: Compute crosstrack error e(t)
+            e_t = min_distance
+            
+            # Step 4: Compute heading error theta_e
+            heading_ref = math.atan2(self.x_y_coordinates[j + 1][1] - self.y_current, self.x_y_coordinates[j + 1][0] - self.x_current)
+            heading_robot = math.radians(float(self.angle_imu))
+            theta_e = heading_ref - heading_robot
+            
+            
+            # Step 5: Compute control angle delta
+            k = 1  # Gain parameter for crosstrack error
+            ksoft = 0.1  # Small positive constant to avoid instability at low speed
+            v = 0.3  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
+            theta_d = math.atan2(k * e_t, ksoft + v)
+            
+            # Compute final steering angle
+            # theta_position = math.atan2(self.y_current, self.x_current)
+            if heading_robot < heading_ref:
+                delta = theta_e - theta_d
+            else:
+                delta = theta_e + theta_d
 
-        # Publish result
-        self.__publish_msg(type_msg="stm32", data=delta)
-        self.get_logger().info(f"Published steering angle: {delta} radians")
+            # Publish result
+            self.__publish_msg(type_msg="stm32", data=delta)
+            self.get_logger().info(f"Published steering angle: {delta} radians")
 
-        return delta, distance_to_goal, min_distance
+            return delta, distance_to_goal, min_distance
+        except Exception as e:
+            self.get_logger().error(f"Error in standley algorithm: {e}")
    
     
     def __convert_lat_lon_to_xy(self, lat, lon):
