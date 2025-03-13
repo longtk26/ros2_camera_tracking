@@ -216,11 +216,11 @@ class StandleyNode(Node):
             e: end
         """
         try:
-            # self.get_logger().info(f"STM32 msg received in standley: {msg}")
             node_received = msg.split(":")[1]
             if node_received != "4":
                 return self.angle_imu, False
             
+            self.get_logger().info(f"STM32 msg received in standley: {msg}")
             data_received = msg.split(":")[2]
             return data_received, True
         except Exception as e:
