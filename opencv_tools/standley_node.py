@@ -19,7 +19,7 @@ class StandleyNode(Node):
         self.ref_lat = 10.882168240297924   
         self.ref_lon = 106.80561693651214
         self.angle_imu = 0.0
-
+        self.current = 0.0
         # ROS2 subscription
         self.subscription_ui = self.create_subscription(
             String,
@@ -86,6 +86,7 @@ class StandleyNode(Node):
             #self.ref_lat = float(self.lat_current)
             #self.ref_lon = float(self.lon_current)
             self.get_logger().info(f"Initalized GPS ref: {self.ref_lat}, {self.ref_lon}")
+            self.current = 0
             self.__publish_msg(type_msg="stm32", data="E")  # Start the robot
             return
 
@@ -125,19 +126,21 @@ class StandleyNode(Node):
                 return
 
             # Step 2: Find the reference point (closest point on the path)
-            min_distance = float('inf')
-            closest_point = None
-            for i in range(len(self.x_y_coordinates) - 10):
-                for j in range(i, i + 10):  # Search next 10 points
-                    x_ref, y_ref = self.x_y_coordinates[j]
-                    distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
-                    if abs(distance) < abs(min_distance):
-                        min_distance = distance
-                        closest_point = (x_ref, y_ref, j)
+            # min_distance = float('inf')
+            # closest_point = None
+            # for i in range(len(self.x_y_coordinates) - 10):
+            #     for j in range(i, i + 10):  # Search next 10 points
+            #         x_ref, y_ref = self.x_y_coordinates[j]
+            #         distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
+            #         if abs(distance) < abs(min_distance):
+            #             min_distance = distance
+            #             closest_point = (x_ref, y_ref, j)
             
-            if closest_point is None:
-                return
-            x_ref, y_ref, j = closest_point
+            # if closest_point is None:
+            #     return
+            # x_ref, y_ref, j = closest_point
+            self.current, min_distance = self.find_closest_in_window(self.x_current, self.y_current, self.x_y_coordinates, self.current, 10)
+            j = self.current
             
             # Step 3: Compute crosstrack error e(t)
             e_t = min_distance
@@ -169,7 +172,31 @@ class StandleyNode(Node):
         except Exception as e:
             self.get_logger().error(f"Error in standley algorithm: {e}")
    
-    
+    import math
+
+    def find_closest_in_window(x_current, y_current, x_y_coordinates, cur_index, window_size):
+        if not x_y_coordinates:
+            return None  # Trả về None nếu danh sách trống
+
+        num_reference_points = len(x_y_coordinates)
+
+        # Xác định phạm vi cửa sổ tìm kiếm
+        start = max(0, cur_index - window_size)
+        end = min(num_reference_points - 1, cur_index + window_size)
+
+        min_distance = float('inf')
+        best_index = start
+
+        for i in range(start, end + 1):
+            x_ref, y_ref = x_y_coordinates[i]
+            distance = math.sqrt((x_ref - x_current) ** 2 + (y_ref - y_current) ** 2)
+
+            if distance < min_distance:
+                min_distance = distance
+                best_index = i
+
+        return best_index, min_distance
+
     def __convert_lat_lon_to_xy(self, lat, lon):
         """
         Convert latitude and longitude to x and y coordinates.
