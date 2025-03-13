@@ -239,7 +239,7 @@ class StandleyNode(Node):
         msg = String()
         msg.data = store[type_msg]
         self.publisher_standley_algorithm.publish(msg)
-        self.get_logger().info(f"Published message from standley::::::: {msg.data}")
+        # self.get_logger().info(f"Published message from standley::::::: {msg.data}")
 
     def destroy_node(self):
         """
