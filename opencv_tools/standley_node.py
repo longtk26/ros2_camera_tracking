@@ -93,10 +93,10 @@ class StandleyNode(Node):
         self.x_current, self.y_current = self.__convert_lat_lon_to_xy(lat=float(self.lat_current), lon=float(self.lon_current))
         try:
             if self.START_STANDLEY_ALGORITHM:
-                delta, distance_to_goal, min_distance = self.__run_standley_algorithm()
+                delta, distance_to_goal, min_distance, heading_ref, theta_d = self.__run_standley_algorithm()
                 angle_imu_rad = math.radians(float(self.angle_imu))
-                self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X: {self.x_current}, Y: {self.y_current}")
-                self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}")
+                self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}")
+                self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}")
         except Exception as e:
             self.get_logger().error(f"Error in handle gps callback: {e}")
     def stm32_callback(self, msg):
@@ -165,7 +165,7 @@ class StandleyNode(Node):
             self.__publish_msg(type_msg="stm32", data=delta)
             self.get_logger().info(f"Published steering angle: {delta} radians")
 
-            return delta, distance_to_goal, min_distance
+            return delta, distance_to_goal, min_distance, heading_ref, theta_d
         except Exception as e:
             self.get_logger().error(f"Error in standley algorithm: {e}")
    
