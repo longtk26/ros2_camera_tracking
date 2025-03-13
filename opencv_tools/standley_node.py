@@ -16,8 +16,8 @@ class StandleyNode(Node):
         # Initialize variables
         self.EARTH_RADIUS = 6378137.0
         self.START_STANDLEY_ALGORITHM = False
-        self.ref_lat = 10.882130166666665
-        self.ref_lon = 106.80544716666667
+        self.ref_lat = 10.882168240297924   
+        self.ref_lon = 106.80561693651214
         self.angle_imu = 0.0
 
         # ROS2 subscription
