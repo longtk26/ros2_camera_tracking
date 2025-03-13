@@ -132,7 +132,7 @@ class StandleyNode(Node):
                     x_ref, y_ref = self.x_y_coordinates[j]
                     # distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
                     distance = -((self.x_current - x_ref) * math.cos(float(self.angle_imu)) + (self.y_current - y_ref) * math.sin(float(self.angle_imu)))
-                    if distance < min_distance:
+                    if abs(distance) < abs(min_distance):
                         min_distance = distance
                         closest_point = (x_ref, y_ref, j)
             
