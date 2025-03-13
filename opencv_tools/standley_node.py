@@ -147,7 +147,7 @@ class StandleyNode(Node):
             e_t = min_distance
             
             # Step 4: Compute heading error theta_e
-            heading_ref = math.atan2(self.x_y_coordinates[j][1] - self.y_current, self.x_y_coordinates[j][0] - self.x_current)
+            heading_ref = math.atan2(self.x_y_coordinates[j+1][1] - self.x_y_coordinates[j][1], self.x_y_coordinates[j+1][0] - self.x_y_coordinates[j][0])
             heading_robot = math.radians(float(self.angle_imu))
             theta_e = heading_ref - heading_robot
             
@@ -173,8 +173,6 @@ class StandleyNode(Node):
         except Exception as e:
             self.get_logger().error(f"Error in standley algorithm: {e}")
    
-    import math
-
     def find_closest_in_window(self, x_current, y_current, x_y_coordinates, cur_index, window_size):
         if not x_y_coordinates:
             return None  # Trả về None nếu danh sách trống
