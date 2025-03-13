@@ -174,7 +174,7 @@ class StandleyNode(Node):
    
     import math
 
-    def find_closest_in_window(x_current, y_current, x_y_coordinates, cur_index, window_size):
+    def find_closest_in_window(self, x_current, y_current, x_y_coordinates, cur_index, window_size):
         if not x_y_coordinates:
             return None  # Trả về None nếu danh sách trống
 
