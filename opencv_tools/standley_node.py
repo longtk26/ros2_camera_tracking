@@ -94,7 +94,7 @@ class StandleyNode(Node):
         if self.START_STANDLEY_ALGORITHM:
            delta, distance_to_goal, min_distance = self.__run_standley_algorithm()
            angle_imu_rad = math.radians(float(self.angle_imu))
-           self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}")
+           self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X: {self.x_current}, Y: {self.y_current}")
            self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}")
 
 
@@ -212,7 +212,7 @@ class StandleyNode(Node):
             e: end
         """
         try:
-            self.get_logger().info(f"STM32 msg received in standley: {msg}")
+            # self.get_logger().info(f"STM32 msg received in standley: {msg}")
             node_received = msg.split(":")[1]
             if node_received != "4":
                 return self.angle_imu, False
