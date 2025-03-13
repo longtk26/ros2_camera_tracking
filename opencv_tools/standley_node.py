@@ -148,7 +148,7 @@ class StandleyNode(Node):
         
         # Step 5: Compute control angle delta
         k = 1  # Gain parameter for crosstrack error
-        ksoft = 1  # Small positive constant to avoid instability at low speed
+        ksoft = 0.1  # Small positive constant to avoid instability at low speed
         v = 0.3  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
         theta_d = math.atan2(k * e_t, ksoft + v)
         
