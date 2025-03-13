@@ -130,7 +130,8 @@ class StandleyNode(Node):
             for i in range(len(self.x_y_coordinates) - 10):
                 for j in range(i, i + 10):  # Search next 10 points
                     x_ref, y_ref = self.x_y_coordinates[j]
-                    distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
+                    # distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
+                    distance = -((self.x_current - x_ref) * math.sin(self.angle_imu) - (self.y_current - y_ref) * math.cos(self.angle_imu))
                     if distance < min_distance:
                         min_distance = distance
                         closest_point = (x_ref, y_ref, j)
