@@ -83,8 +83,8 @@ class StandleyNode(Node):
         """
         # Check if GPS is initialized
         if self.status_gps != "running":
-            #self.ref_lat = float(self.lat_current)
-            #self.ref_lon = float(self.lon_current)
+            self.ref_lat = float(self.lat_current)
+            self.ref_lon = float(self.lon_current)
             self.get_logger().info(f"Initalized GPS ref: {self.ref_lat}, {self.ref_lon}")
             self.current = 0
             self.__publish_msg(type_msg="stm32", data="E")  # Start the robot
