@@ -150,7 +150,7 @@ class StandleyNode(Node):
             heading_ref = math.atan2(self.x_y_coordinates[j][1] - self.y_current
                                      , self.x_y_coordinates[j][0] - self.x_current)
             heading_robot = math.radians(float(self.angle_imu))
-            theta_e = heading_ref - heading_robot
+            theta_e = abs(heading_ref) - heading_robot
             
             
             # Step 5: Compute control angle delta
