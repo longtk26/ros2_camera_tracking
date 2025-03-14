@@ -201,28 +201,32 @@ class StandleyNode(Node):
         """
         Convert latitude and longitude to x and y coordinates.
         """
-        if lat == self.ref_lat and lon == self.ref_lon:
+        try:
+            if lat == self.ref_lat and lon == self.ref_lon:
+                return 0.0, 0.0
+
+            lat_rad = math.radians(lat)
+            lon_rad = math.radians(lon)
+            ref_lat_rad = math.radians(self.ref_lat)
+            ref_lon_rad = math.radians(self.ref_lon)
+
+            sin_lat = math.sin(lat_rad)
+            cos_lat = math.cos(lat_rad)
+            cos_d_lon = math.cos(lon_rad - ref_lon_rad)
+
+            ref_sin_lat = math.sin(ref_lat_rad)
+            ref_cos_lat = math.cos(ref_lat_rad)
+
+            c = math.acos(ref_sin_lat * sin_lat + ref_cos_lat * cos_lat * cos_d_lon)
+            k = 1.0 if abs(c) < sys.float_info.epsilon else c / math.sin(c)
+
+            x = k * (ref_cos_lat * sin_lat - ref_sin_lat * cos_lat * cos_d_lon) * self.EARTH_RADIUS
+            y = k * cos_lat * math.sin(lon_rad - ref_lon_rad) * self.EARTH_RADIUS
+
+            return x, y
+        except Exception as e:
+            self.get_logger().error(f"Error convert lat lon to xy: {e}")
             return 0.0, 0.0
-
-        lat_rad = math.radians(lat)
-        lon_rad = math.radians(lon)
-        ref_lat_rad = math.radians(self.ref_lat)
-        ref_lon_rad = math.radians(self.ref_lon)
-
-        sin_lat = math.sin(lat_rad)
-        cos_lat = math.cos(lat_rad)
-        cos_d_lon = math.cos(lon_rad - ref_lon_rad)
-
-        ref_sin_lat = math.sin(ref_lat_rad)
-        ref_cos_lat = math.cos(ref_lat_rad)
-
-        c = math.acos(ref_sin_lat * sin_lat + ref_cos_lat * cos_lat * cos_d_lon)
-        k = 1.0 if abs(c) < sys.float_info.epsilon else c / math.sin(c)
-
-        x = k * (ref_cos_lat * sin_lat - ref_sin_lat * cos_lat * cos_d_lon) * self.EARTH_RADIUS
-        y = k * cos_lat * math.sin(lon_rad - ref_lon_rad) * self.EARTH_RADIUS
-
-        return x, y
 
     def __get_node_and_data_from_msg(self, msg):
         """
