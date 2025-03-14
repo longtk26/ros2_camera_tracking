@@ -126,20 +126,20 @@ class StandleyNode(Node):
                 return
 
             # Step 2: Find the reference point (closest point on the path)
-            min_distance = float('inf')
-            closest_point = None
-            for i in range(len(self.x_y_coordinates) - 10):
-                for j in range(i, i + 10):  # Search next 10 points
-                    x_ref, y_ref = self.x_y_coordinates[j]
-                    distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
-                    if abs(distance) < abs(min_distance):
-                        min_distance = distance
-                        closest_point = (x_ref, y_ref, j)
+            # min_distance = float('inf')
+            # closest_point = None
+            # for i in range(len(self.x_y_coordinates) - 10):
+            #     for j in range(i, i + 10):  # Search next 10 points
+            #         x_ref, y_ref = self.x_y_coordinates[j]
+            #         distance = math.sqrt((x_ref - self.x_current) ** 2 + (y_ref - self.y_current) ** 2)
+            #         if abs(distance) < abs(min_distance):
+            #             min_distance = distance
+            #             closest_point = (x_ref, y_ref, j)
             
-            if closest_point is None:
-                return
-            x_ref, y_ref, j = closest_point
-            # self.current, min_distance = self.find_closest_in_window(self.x_current, self.y_current, self.x_y_coordinates, self.current, 10)
+            # if closest_point is None:
+            #     return
+            # x_ref, y_ref, j = closest_point
+            self.current, min_distance = self.find_closest_in_window(self.x_current, self.y_current, self.x_y_coordinates, self.current, 10)
             j = self.current
             self.get_logger().info(f"Closest point [{j}]: {self.x_y_coordinates[j]}")
             
@@ -154,7 +154,7 @@ class StandleyNode(Node):
             
             
             # Step 5: Compute control angle delta
-            k = 1  # Gain parameter for crosstrack error
+            k = 0.5  # Gain parameter for crosstrack error
             ksoft = 0.1  # Small positive constant to avoid instability at low speed
             v = 0.3  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
             theta_d = math.atan2(k * e_t, ksoft + v)
