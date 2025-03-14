@@ -147,14 +147,14 @@ class StandleyNode(Node):
             e_t = min_distance
             
             # Step 4: Compute heading error theta_e
-            heading_ref = math.atan2(self.x_y_coordinates[j][1] - self.y_current
-                                     , self.x_y_coordinates[j][0] - self.x_current)
+            heading_ref = abs(math.atan2(self.x_y_coordinates[j][1] - self.y_current
+                                     , self.x_y_coordinates[j][0] - self.x_current))
             heading_robot = math.radians(float(self.angle_imu))
-            theta_e = abs(heading_ref) - heading_robot
+            theta_e = heading_ref - heading_robot
             
             
             # Step 5: Compute control angle delta
-            k = 2  # Gain parameter for crosstrack error
+            k = 1  # Gain parameter for crosstrack error
             ksoft = 0.1  # Small positive constant to avoid instability at low speed
             v = 0.3  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
             theta_d = math.atan2(k * e_t, ksoft + v)
