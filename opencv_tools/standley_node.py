@@ -20,8 +20,8 @@ class StandleyNode(Node):
         self.ref_lon = 106.80561693651214
         self.angle_imu = 0.0
         self.angle_imu_before_standley = 0.0
-        self.angle_imu_after_standley = 0.0
         self.current = 0.0
+        self.standley_angle = 0.0
         # ROS2 subscription
         self.subscription_ui = self.create_subscription(
             String,
@@ -48,6 +48,9 @@ class StandleyNode(Node):
             "standley_output",
             10
         )
+
+        # ROS2 timer
+        self.timer_update_graph = self.create_timer(1, self.update_graph)
 
         self.get_logger().info("Standley node has been started.")
         
@@ -90,20 +93,19 @@ class StandleyNode(Node):
             self.get_logger().info(f"Initalized GPS ref: {self.ref_lat}, {self.ref_lon}")
             self.current = 0
             self.__publish_msg(type_msg="stm32", data="E")  # Start the robot
+            self.START_STANDLEY_ALGORITHM = False
             return
         
         # Convert current GPS data to x, y coordinates
         self.x_current, self.y_current = self.__convert_lat_lon_to_xy(lat=float(self.lat_current), lon=float(self.lon_current))
-        self.angle_imu_before_standley = math.radians(float(self.angle_imu))
         try:
             if self.START_STANDLEY_ALGORITHM:
+                self.angle_imu_before_standley = float(self.angle_imu)
                 delta, distance_to_goal, min_distance, heading_ref, theta_d = self.__run_standley_algorithm()
                 angle_imu_rad = math.radians(float(self.angle_imu))
+                self.standley_angle = delta
                 self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
                 self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}")
-
-                self.angle_imu_after_standley = math.radians(float(self.angle_imu))
-                self.__publish_msg(type_msg="ui-graph", data=f"{delta}:{self.angle_imu_after_standley-self.angle_imu_before_standley}")
         except Exception as e:
             self.get_logger().error(f"Error in handle gps callback: {e}")
     def stm32_callback(self, msg):
@@ -115,6 +117,17 @@ class StandleyNode(Node):
             # self.get_logger().info(f"Angle IMU:::::: {self.angle_imu}")
             pass
         
+    def update_graph(self):
+        """
+        Update graph on UI.
+        """
+        try:
+            if self.START_STANDLEY_ALGORITHM:
+                self.__publish_msg(type_msg="ui-graph", data=f"{self.standley_angle}:{float(self.angle_imu)-self.angle_imu_before_standley}")
+                self.get_logger().info(f"Published graph data: {self.standley_angle}:{float(self.angle_imu)-self.angle_imu_before_standley}")
+        except Exception as e:
+            self.get_logger().error(f"Error in update graph: {e}")
+
     def __run_standley_algorithm(self):
         """
         Run Stanley algorithm to calculate the steering angle.
@@ -147,7 +160,7 @@ class StandleyNode(Node):
             # x_ref, y_ref, j = closest_point
             self.current, min_distance = self.find_closest_in_window(self.x_current, self.y_current, self.x_y_coordinates, self.current, 10)
             j = self.current
-            self.get_logger().info(f"Closest point [{j}]: {self.x_y_coordinates[j]}")
+            # self.get_logger().info(f"Closest point [{j}]: {self.x_y_coordinates[j]}")
             
             # Step 3: Compute crosstrack error e(t)
             e_t = min_distance
