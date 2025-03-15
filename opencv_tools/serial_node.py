@@ -4,6 +4,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 import serial
 import ast
+import random
 
 class SerialNode(Node):
     def __init__(self):
@@ -17,21 +18,23 @@ class SerialNode(Node):
         # Serial port configuration
         self.serial_port = "/dev/ttyUSB0"  # Update this to your STM32's port
         self.baud_rate = 115200
-        self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=0.001
-                                               , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+        # self.serial_connection = serial.Serial(self.serial_port, self.baud_rate, timeout=0.001
+        #                                        , parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+        self.serial_connection = None
+
 
         # Serial gps configuration
         self.serial_gps_port = "/dev/ttyACM0"  # Update this to your GPS's port
         self.baud_rate_gps = 38400
-        self.serial_gps_conn = serial.Serial(
-            self.serial_gps_port,
-            self.baud_rate_gps,
-            timeout=1,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS
-        )
-        # self.serial_gps_conn = None
+        # self.serial_gps_conn = serial.Serial(
+        #     self.serial_gps_port,
+        #     self.baud_rate_gps,
+        #     timeout=1,
+        #     parity=serial.PARITY_NONE,
+        #     stopbits=serial.STOPBITS_ONE,
+        #     bytesize=serial.EIGHTBITS
+        # )
+        self.serial_gps_conn = None
 
         # Specs for STM32
         self.specs = {
@@ -135,7 +138,8 @@ class SerialNode(Node):
         """
         try:
             if (self.standley_output_msg and self.SIGNAL_GPS) or (self.standley_output_msg and self.SIGNAL_INIT_GPS):
-                self.serial_connection.write((self.standley_output_msg).encode("utf-8"))
+                # self.serial_connection.write((self.standley_output_msg).encode("utf-8"))
+                pass
                 # self.get_logger().info(f"Sending standley output to STM32:::: {self.standley_output_msg}")
         except Exception as e:
             self.get_logger().error(f"Error sending standley output to STM32: {e}")
@@ -145,8 +149,9 @@ class SerialNode(Node):
         Continuously read from STM32 and handle the data.
         """
         try:
-            if self.serial_connection.in_waiting > 0 and self.SIGNAL_GPS:
-                data = self.serial_connection.readline().decode("utf-8").strip()
+            if self.SIGNAL_GPS:
+                random_IMU = random.randint(91, 98)
+                data = f"s:4:{random_IMU}:e"
                 if not("s" in data) or not("e" in data):
                     self.get_logger().info(f"Invalid data from STM32:::: {data}")
                     return
@@ -165,8 +170,8 @@ class SerialNode(Node):
         Data format from GPS module: $GNRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A
         """
         try:
-            if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_GPS:
-                data = self.serial_gps_conn.readline().decode("utf-8").strip()
+            if self.SIGNAL_GPS:
+                data = "$GNRMC,123519,A,1052.930094,N,10648.337016,E,022.4,084.4,230394,003.1,W*6A"
                 # self.get_logger().info(f"RAW DATA:::: {data}")
 
                 # format the data to handle
@@ -234,7 +239,7 @@ class SerialNode(Node):
         """
         try:
             frame_ = "s:2:S:e"
-            self.serial_connection.write((frame_).encode("utf-8"))
+            # self.serial_connection.write((frame_).encode("utf-8"))
             self.get_logger().info(f"Sending request IMU to STM32:::: {frame_}")
         except Exception as e:
             self.get_logger().error(f"Error sending request IMU to STM32: {e}")
@@ -273,8 +278,8 @@ class SerialNode(Node):
         Send initial GPS data to GUI.
         """
         try:
-            if self.serial_gps_conn.in_waiting > 0 and self.SIGNAL_INIT_GPS:
-                data = self.serial_gps_conn.readline().decode("utf-8").strip()
+            if self.SIGNAL_INIT_GPS:
+                data = "$GNRMC,123519,A,1052.930094,N,10648.337016,E,022.4,084.4,230394,003.1,W*6A"
                 # self.get_logger().info(f"Received GPS data::::: {data}")
                 # format the data to send to GUI
                 formatted_data = data.split(",")
