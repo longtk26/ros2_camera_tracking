@@ -8,7 +8,6 @@ RUN mkdir -p /app/ros2_ws/src/opencv_tools
 
 # Copy source code to the container
 COPY . /app/ros2_ws/src/opencv_tools
-RUN pip3 install -r /app/ros2_ws/src/opencv_tools/requirements.txt
 
 # Build the ROS2 workspace and source the environment
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && cd /app/ros2_ws && colcon build"

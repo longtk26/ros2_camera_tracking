@@ -32,3 +32,6 @@ ros-humble-cv-bridge \
 ros-humble-image-transport \
 ros-humble-vision-opencv \
 ros-humble-rosbridge-server
+
+# Install python3 dependencies
+RUN pip3 install pyserial==3.5
