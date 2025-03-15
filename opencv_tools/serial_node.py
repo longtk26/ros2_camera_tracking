@@ -117,7 +117,7 @@ class SerialNode(Node):
         is_send_to_stm32 = False
         signal = msg.data.split(":")[1]
 
-        if signal == "5":
+        if signal == "5" or signal == "6":
             msg_ui = String()
             msg_ui.data = msg.data
             self.publishers_.publish(msg_ui)

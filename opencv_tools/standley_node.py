@@ -19,6 +19,8 @@ class StandleyNode(Node):
         self.ref_lat = 10.882168240297924   
         self.ref_lon = 106.80561693651214
         self.angle_imu = 0.0
+        self.angle_imu_before_standley = 0.0
+        self.angle_imu_after_standley = 0.0
         self.current = 0.0
         # ROS2 subscription
         self.subscription_ui = self.create_subscription(
@@ -89,15 +91,19 @@ class StandleyNode(Node):
             self.current = 0
             self.__publish_msg(type_msg="stm32", data="E")  # Start the robot
             return
-
+        
         # Convert current GPS data to x, y coordinates
         self.x_current, self.y_current = self.__convert_lat_lon_to_xy(lat=float(self.lat_current), lon=float(self.lon_current))
+        self.angle_imu_before_standley = math.radians(float(self.angle_imu))
         try:
             if self.START_STANDLEY_ALGORITHM:
                 delta, distance_to_goal, min_distance, heading_ref, theta_d = self.__run_standley_algorithm()
                 angle_imu_rad = math.radians(float(self.angle_imu))
                 self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
                 self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}")
+
+                self.angle_imu_after_standley = math.radians(float(self.angle_imu))
+                self.__publish_msg(type_msg="ui-graph", data=f"{delta}:{self.angle_imu_after_standley-self.angle_imu_before_standley}")
         except Exception as e:
             self.get_logger().error(f"Error in handle gps callback: {e}")
     def stm32_callback(self, msg):
@@ -265,7 +271,8 @@ class StandleyNode(Node):
         """
         store = {
             "stm32": f"s:2:{data}:e",
-            "ui": f"s:5:{data}:e"   # Node 4 is Standley node on UI: s:4:delta:distance_to_goal:min_distance:e
+            "ui": f"s:5:{data}:e",   # Node 4 is Standley node on UI: s:4:delta:distance_to_goal:min_distance:e
+            "ui-graph": f"s:6:{data}:e"  # Node 6 is Standley node on UI graph: s:6:x:y:e
         }
         msg = String()
         msg.data = store[type_msg]
