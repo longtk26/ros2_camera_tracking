@@ -13,6 +13,7 @@ class SerialNode(Node):
         self.SIGNAL_FOLLOW_SPECS = False
         self.SIGNAL_GPS = False
         self.SIGNAL_INIT_GPS = False
+        self.DEBUG_IMU = False
         self.standley_output_msg = None
 
         # Serial port configuration
@@ -82,6 +83,12 @@ class SerialNode(Node):
                 self.SIGNAL_INIT_GPS = False
                 self.specs["speed"] = 0
                 self.specs["angle"] = 0
+            elif msg.data == "debug_imu":
+                self.DEBUG_IMU = True
+                self.get_logger().info("Debugging IMU data...")
+            elif msg.data == "stop_debug_imu":
+                self.DEBUG_IMU = False
+                self.get_logger().info("====Stop debugging IMU data======")
             elif node_received == "[serial]":
                 self.get_logger().info(f"===[Serial Node] SIGNAL FROM UI CONTROL=== {msg.data}")
                 self.SIGNAL_FOLLOW_SPECS = False
@@ -149,17 +156,23 @@ class SerialNode(Node):
         Continuously read from STM32 and handle the data.
         """
         try:
-            if self.SIGNAL_GPS:
-                random_IMU = random.randint(91, 98)
-                data = f"s:4:{random_IMU}:e"
-                if not("s" in data) or not("e" in data):
-                    self.get_logger().info(f"Invalid data from STM32:::: {data}")
-                    return
+            random_IMU = random.randint(91, 98)
+            data = f"s:4:{random_IMU}:e"
+            if not("s" in data) or not("e" in data):
+                self.get_logger().info(f"Invalid data from STM32:::: {data}")
+                return
 
-                # Publish the received data to another ROS topic
-                msg = String()
-                msg.data = data
-                self.publishers_.publish(msg)
+            # Publish the received data to another ROS topic
+            msg = String()
+            msg.data = data
+            self.publishers_.publish(msg)
+
+            # Save data to a file
+            if self.DEBUG_IMU:
+                with open("imu_data.txt", "a") as file:
+                    file.write(f"{data}\n")
+
+                self.get_logger().info(f"Received data from STM32:::: {data}")
                 # Process the received data or publish it to another ROS topic if needed
         except Exception as e:
             self.get_logger().error(f"Error reading from STM32: {e}")

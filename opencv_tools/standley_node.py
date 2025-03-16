@@ -22,6 +22,7 @@ class StandleyNode(Node):
         self.angle_imu_before_standley = 0.0
         self.current = 0.0
         self.standley_angle = 0.0
+        self.closest_point = None
         # ROS2 subscription
         self.subscription_ui = self.create_subscription(
             String,
@@ -57,6 +58,11 @@ class StandleyNode(Node):
 
     def ui_callback(self, msg):
         node_received, data_received = self.__get_node_and_data_from_msg(msg.data)
+
+        if not node_received or not data_received:
+            self.get_logger().warning("Node or data received is invalid.")
+            return
+
         self.handle_ui_callback(node_received, data_received)
 
     def handle_ui_callback(self, node_received, data_received):
@@ -101,9 +107,11 @@ class StandleyNode(Node):
         try:
             if self.START_STANDLEY_ALGORITHM:
                 self.angle_imu_before_standley = float(self.angle_imu)
-                delta, distance_to_goal, min_distance, heading_ref, theta_d = self.__run_standley_algorithm()
+                delta, distance_to_goal, min_distance, heading_ref, theta_d, closet_point = self.__run_standley_algorithm()
                 angle_imu_rad = math.radians(float(self.angle_imu))
                 self.standley_angle = delta
+                self.closest_point = closet_point
+
                 self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
                 self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}")
         except Exception as e:
@@ -123,8 +131,8 @@ class StandleyNode(Node):
         """
         try:
             if self.START_STANDLEY_ALGORITHM:
-                self.__publish_msg(type_msg="ui-graph", data=f"{self.standley_angle}:{float(self.angle_imu)-self.angle_imu_before_standley}")
-                self.get_logger().info(f"Published graph data: {self.standley_angle}:{float(self.angle_imu)-self.angle_imu_before_standley}")
+                self.__publish_msg(type_msg="ui-graph", data=f"{self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}")
+                self.get_logger().info(f"Published graph data: {self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}")
         except Exception as e:
             self.get_logger().error(f"Error in update graph: {e}")
 
@@ -160,6 +168,7 @@ class StandleyNode(Node):
             # x_ref, y_ref, j = closest_point
             self.current, min_distance = self.find_closest_in_window(self.x_current, self.y_current, self.x_y_coordinates, self.current, 10)
             j = self.current
+            closet_point = self.x_y_coordinates[j]
             # self.get_logger().info(f"Closest point [{j}]: {self.x_y_coordinates[j]}")
             
             # Step 3: Compute crosstrack error e(t)
@@ -189,7 +198,7 @@ class StandleyNode(Node):
             self.__publish_msg(type_msg="stm32", data=delta)
             self.get_logger().info(f"Published steering angle: {delta} radians")
 
-            return delta, distance_to_goal, min_distance, heading_ref, theta_d
+            return delta, distance_to_goal, min_distance, heading_ref, theta_d, closet_point
         except Exception as e:
             self.get_logger().error(f"Error in standley algorithm: {e}")
    
@@ -251,9 +260,13 @@ class StandleyNode(Node):
         """
         Get node and data from the message.
         """
-        node_received = msg.split(" ")[0]
-        data_received = msg.split(" ")[1]
-        return node_received, data_received
+        try:
+            node_received = msg.split(" ")[0]
+            data_received = msg.split(" ")[1]
+            return node_received, data_received
+        except Exception as e:
+            self.get_logger().error(f"Error __get_node_and_data_from_msg: {e}")
+            return False, False
 
     def __check_msg_stm32_is_valid_and_return_data(self, msg):
         """
