@@ -17,6 +17,8 @@ services:
       - PYTHONUNBUFFERED=1  # Ensures Python output is visible in real-time
       - DISPLAY=${DISPLAY}  # Set the display environment variable
       - QT_X11_NO_MITSHM=1  # Disable MIT-SHM for better compatibility
+    volumes:
+       - ./data/imu_data.txt:/app/imu_data.txt
     tty: true  # Keep the container running for ROS commands
     privileged: true  # Allow access to hardware devices
     networks:

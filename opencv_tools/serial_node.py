@@ -12,6 +12,7 @@ class SerialNode(Node):
         self.SIGNAL_FOLLOW_SPECS = False
         self.SIGNAL_GPS = False
         self.SIGNAL_INIT_GPS = False
+        self.DEBUG_IMU = False
         self.standley_output_msg = None
 
         # Serial port configuration
@@ -79,6 +80,12 @@ class SerialNode(Node):
                 self.SIGNAL_INIT_GPS = False
                 self.specs["speed"] = 0
                 self.specs["angle"] = 0
+            elif msg.data == "debug_imu":
+                self.DEBUG_IMU = True
+                self.get_logger().info("Debugging IMU data...")
+            elif msg.data == "stop_debug_imu":
+                self.DEBUG_IMU = False
+                self.get_logger().info("====Stop debugging IMU data======")
             elif node_received == "[serial]":
                 self.get_logger().info(f"===[Serial Node] SIGNAL FROM UI CONTROL=== {msg.data}")
                 self.SIGNAL_FOLLOW_SPECS = False
@@ -156,6 +163,14 @@ class SerialNode(Node):
                 msg.data = data
                 self.publishers_.publish(msg)
                 # Process the received data or publish it to another ROS topic if needed
+
+            # Save data to a file
+            if self.serial_connection.in_waiting > 0 and self.DEBUG_IMU:
+                data_save = self.serial_connection.readline().decode("utf-8").strip()
+                with open("imu_data.txt", "a") as file:
+                    file.write(f"{data_save}\n")
+
+                self.get_logger().info(f"Received data from STM32:::: {data}")
         except Exception as e:
             self.get_logger().error(f"Error reading from STM32: {e}")
     
