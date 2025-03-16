@@ -181,10 +181,10 @@ class StandleyNode(Node):
             # Compute final steering angle
             # theta_position = math.atan2(self.y_current, self.x_current)
             if heading_robot < heading_ref:
-                delta = theta_e - theta_d
+                delta = theta_e + theta_d
                 # delta = theta_e
             else:
-                delta = theta_e + theta_d
+                delta = theta_e - theta_d
                 # delta = theta_e
 
             # Publish result
