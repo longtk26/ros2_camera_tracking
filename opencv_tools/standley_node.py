@@ -112,7 +112,7 @@ class StandleyNode(Node):
                 self.standley_angle = delta
                 self.closest_point = closest_point
                 self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
-                self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}")
+                self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}:{closest_point[0]}:{closest_point[1]}")
         except Exception as e:
             self.get_logger().error(f"Error in handle gps callback: {e}")
     def stm32_callback(self, msg):
