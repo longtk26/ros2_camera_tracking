@@ -170,7 +170,7 @@ class SerialNode(Node):
                 with open("imu_data.txt", "a") as file:
                     file.write(f"{data_save}\n")
 
-                self.get_logger().info(f"Received data from STM32:::: {data}")
+                self.get_logger().info(f"Received data from STM32:::: {data_save}")
         except Exception as e:
             self.get_logger().error(f"Error reading from STM32: {e}")
     
