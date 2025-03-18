@@ -1,34 +1,26 @@
-import serial
 import time
+import random
 
 def main():
-    # Configure the serial port (update the port name as needed)
-    port = '/dev/ttyUSB0'  # Update to your serial port, e.g., COM3 for Windows
-    baud_rate = 19200  # Match this with your device's baud rate
+    file_path = "./data/imu_data.txt"  # File to store IMU data
 
-    # Open the serial port
-    try:
-        ser = serial.Serial(port, baud_rate, timeout=1)
-        print(f"Connected to {port} at {baud_rate} baud.")
-    except serial.SerialException as e:
-        print(f"Error opening serial port: {e}")
-        return
+    print("Starting IMU data simulation...")
 
     try:
-        while True:
-            # Read data from the serial port
-            try:
-                if ser.isOpen():
-                    data = ser.readline().decode('utf-8').strip()
-                    print(f"Received data: {data}")
-            except UnicodeDecodeError as e:
-                print(f"Error decoding data: {e}")
+        with open(file_path, "a") as file:  # Open file in append mode
+            while True:
+                # Simulate data in format "s:4:<random_number>:e"
+                random_value = random.randint(0, 100)  # Generate random number
+                data = f"s:4:{random_value}:e"
+                
+                print(f"Generated data: {data}")
+                file.write(data + "\n")  # Write to file
+                file.flush()  # Ensure data is written immediately
+
+                time.sleep(1)  # Simulate data arriving every second
 
     except KeyboardInterrupt:
-        print("Stopping serial data read.")
-    finally:
-        ser.close()
-        print("Serial port closed.")
+        print("\nStopping IMU data simulation.")
 
 if __name__ == "__main__":
     main()
