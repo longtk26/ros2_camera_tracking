@@ -4,6 +4,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 import serial
 import ast
+import os
 
 class SerialNode(Node):
     def __init__(self):
@@ -147,30 +148,50 @@ class SerialNode(Node):
         except Exception as e:
             self.get_logger().error(f"Error sending standley output to STM32: {e}")
 
+    # def read_from_stm32(self):
+    #     """
+    #     Continuously read from STM32 and handle the data.
+    #     """
+    #     try:
+    #         if self.serial_connection.in_waiting > 0 and self.SIGNAL_GPS:
+    #             data = self.serial_connection.readline().decode("utf-8").strip()
+    #             if not("s" in data) or not("e" in data):
+    #                 self.get_logger().info(f"Invalid data from STM32:::: {data}")
+    #                 return
+
+    #             # Publish the received data to another ROS topic
+    #             msg = String()
+    #             msg.data = data
+    #             self.publishers_.publish(msg)
+    #             # Process the received data or publish it to another ROS topic if needed
+
+    #         # Save data to a file
+    #         if self.serial_connection.in_waiting > 0 and self.DEBUG_IMU:
+    #             data_save = self.serial_connection.readline().decode("utf-8").strip()
+    #             with open("imu_data.txt", "a") as file:
+    #                 file.write(f"{data_save}\n")
+
+    #             self.get_logger().info(f"Received data from STM32:::: {data_save}")
+    #     except Exception as e:
+    #         self.get_logger().error(f"Error reading from STM32: {e}")
+
+
     def read_from_stm32(self):
         """
         Continuously read from STM32 and handle the data.
         """
         try:
-            if self.serial_connection.in_waiting > 0 and self.SIGNAL_GPS:
-                data = self.serial_connection.readline().decode("utf-8").strip()
-                if not("s" in data) or not("e" in data):
-                    self.get_logger().info(f"Invalid data from STM32:::: {data}")
-                    return
-
-                # Publish the received data to another ROS topic
-                msg = String()
-                msg.data = data
-                self.publishers_.publish(msg)
-                # Process the received data or publish it to another ROS topic if needed
-
-            # Save data to a file
-            if self.serial_connection.in_waiting > 0 and self.DEBUG_IMU:
-                data_save = self.serial_connection.readline().decode("utf-8").strip()
-                with open("imu_data.txt", "a") as file:
-                    file.write(f"{data_save}\n")
-
-                self.get_logger().info(f"Received data from STM32:::: {data_save}")
+            file_path = '/app/imu_data.txt'  # Điều chỉnh đường dẫn
+            # Đọc dòng mới nhất từ tệp IMU
+            if os.path.exists(file_path):
+                with open(file_path, "r") as file:
+                    lines = file.readlines()
+                    if lines:
+                        latest_imu_data = lines[-1].strip()
+                        msg = String()
+                        msg.data = latest_imu_data
+                        self.publishers_.publish(msg)
+                        self.get_logger().info(f"Latest IMU data: {latest_imu_data}")
         except Exception as e:
             self.get_logger().error(f"Error reading from STM32: {e}")
     
