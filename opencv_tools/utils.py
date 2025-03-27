@@ -47,6 +47,10 @@ class Utils:
         if node_detect.first_focal == 0:
             node_detect.focal_length = self.focal_length(high_in_image=h, real_high=real_high, measured_distance=measured_distance)
             node_detect.get_logger().info(f"FOCAL LENGTH FIRST................{node_detect.focal_length}")
+            
+            with open("focal_length.txt", "w") as file:
+                file.write(str(node_detect.focal_length))
+                
             node_detect.first_focal = 1
         
         distance = self.distance_finder(focal_length=node_detect.focal_length, real_high_person=real_high, high_person_in_frame=h)
