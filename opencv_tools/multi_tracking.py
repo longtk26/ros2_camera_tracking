@@ -55,6 +55,7 @@ def tracking(self, multi_tracker, frame_update):
                     twist_message = Twist()
                     twist_message.linear.x = vel
                     twist_message.angular.z = angle
+                    twist_message.linear.y = distance
                     self.publishers_follow_specs_.publish(twist_message)
 
         self.old_boxes = updated_boxes
