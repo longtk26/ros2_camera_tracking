@@ -187,7 +187,7 @@ class SerialNode(Node):
             if os.path.exists(file_path):
                 with open(file_path, "r") as file:
                     lines = file.readlines()
-                    if lines:
+                    if lines and self.SIGNAL_GPS:
                         latest_imu_data = lines[-1].strip()
                         msg = String()
                         msg.data = latest_imu_data

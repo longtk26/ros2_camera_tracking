@@ -111,7 +111,7 @@ class StandleyNode(Node):
                 angle_imu_rad = math.radians(float(self.angle_imu))
                 self.standley_angle = delta
                 self.closest_point = closest_point
-                self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
+                # self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
                 self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}:{closest_point[0]}:{closest_point[1]}")
         except Exception as e:
             self.get_logger().error(f"Error in handle gps callback: {e}")
@@ -131,7 +131,7 @@ class StandleyNode(Node):
         try:
             if self.START_STANDLEY_ALGORITHM:
                 self.__publish_msg(type_msg="ui-graph", data=f"{self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}")
-                self.get_logger().info(f"Published graph data: {self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}")
+                # self.get_logger().info(f"Published graph data: {self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}")
         except Exception as e:
             self.get_logger().error(f"Error in update graph: {e}")
 
@@ -176,28 +176,31 @@ class StandleyNode(Node):
             # Step 4: Compute heading error theta_e
             heading_ref = math.atan2(self.x_y_coordinates[j+1][1] - self.x_y_coordinates[j][1]
                                      , self.x_y_coordinates[j+1][0] - self.x_y_coordinates[j][0])
+
+            heading_ref = heading_ref - math.pi
+
             heading_robot = math.radians(float(self.angle_imu))
             theta_e = heading_robot - heading_ref
             
             
             # Step 5: Compute control angle delta
-            k = 0.8  # Gain parameter for crosstrack error
-            ksoft = 0.01  # Small positive constant to avoid instability at low speed
-            v = 0.5  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
+            k = 0.4  # Gain parameter for crosstrack error
+            ksoft = 0.8  # Small positive constant to avoid instability at low speed
+            v = 0.3  # Assume velocity is 0.5 m/s (adjust if real velocity is available)
             theta_d = math.atan2(k * e_t, ksoft + v)
             
             # Compute final steering angle
             # theta_position = math.atan2(self.y_current, self.x_current)
             if heading_robot < heading_ref:
-                # delta = theta_e + theta_d
-                delta = theta_e
+                delta = theta_e - theta_d
+                # delta = theta_e
             else:
-                # delta = theta_e - theta_d
-                delta = theta_e
+                delta = theta_e + theta_d
+                # delta = theta_e
 
             # Publish result
             self.__publish_msg(type_msg="stm32", data=delta)
-            self.get_logger().info(f"Published steering angle: {delta} radians")
+            # self.get_logger().info(f"Published steering angle: {delta} radians")
 
             return delta, distance_to_goal, min_distance, heading_ref, theta_d, closet_point
         except Exception as e:
@@ -281,10 +284,10 @@ class StandleyNode(Node):
         """
         try:
             node_received = msg.split(":")[1]
+            # self.get_logger().info(f"STM32 msg received in standley: {msg}")
             if node_received != "4":
                 return self.angle_imu, False
             
-            # self.get_logger().info(f"STM32 msg received in standley: {msg}")
             data_received = msg.split(":")[2]
             return data_received, True
         except Exception as e:
