@@ -58,10 +58,10 @@ class SerialNode(Node):
 
 
         # ROS2 timers
-        # self.timer_ = self.create_timer(0.01, self.send_follow_specs)
+        self.timer_ = self.create_timer(0.01, self.send_follow_specs)
         self.timer_receive_STM32_ = self.create_timer(0.01, self.read_from_stm32)
-        self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
-        self.timer_send_standley_output = self.create_timer(0.01, self.send_standley_output)
+        # self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
+        # self.timer_send_standley_output = self.create_timer(0.01, self.send_standley_output)
         self.get_logger().info("Serial node has been started.")
         
 
@@ -115,6 +115,7 @@ class SerialNode(Node):
             # Send the message to STM32 via serial
             self.specs["speed"] = f"{msg.linear.x:.3f}"
             self.specs["angle"] = f"{msg.angular.z:.3f}"
+            self.specs["distance"] = f"{msg.linear.y:.3f}"
         except Exception as e:
             self.get_logger().error(f"Error sending follow specs to STM32: {e}")
 
@@ -236,6 +237,12 @@ class SerialNode(Node):
         """
         try:
             if self.SIGNAL_FOLLOW_SPECS:
+                distance = float(self.specs["distance"])
+                if distance < 1:
+                    frame_ = f"s:1:2:{self.specs['angle']}:STOP:e"
+                    self.get_logger().info(f"Sending specs to stm32 {frame_}")
+                    self.serial_connection.write((frame_).encode("utf-8"))
+                    return
                 frame_ = f"s:1:2:{self.specs['angle']}:{self.specs['speed']}:e\n"
                 self.get_logger().info(f"Sending specs to stm32 {frame_}")
                 self.serial_connection.write((frame_).encode("utf-8"))
