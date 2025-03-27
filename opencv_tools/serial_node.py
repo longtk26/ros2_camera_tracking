@@ -25,15 +25,15 @@ class SerialNode(Node):
         # Serial gps configuration
         self.serial_gps_port = "/dev/ttyACM0"  # Update this to your GPS's port
         self.baud_rate_gps = 38400
-        self.serial_gps_conn = serial.Serial(
-            self.serial_gps_port,
-            self.baud_rate_gps,
-            timeout=1,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS
-        )
-        # self.serial_gps_conn = None
+        # self.serial_gps_conn = serial.Serial(
+        #     self.serial_gps_port,
+        #     self.baud_rate_gps,
+        #     timeout=1,
+        #     parity=serial.PARITY_NONE,
+        #     stopbits=serial.STOPBITS_ONE,
+        #     bytesize=serial.EIGHTBITS
+        # )
+        self.serial_gps_conn = None
 
         # Specs for STM32
         self.specs = {
