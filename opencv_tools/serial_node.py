@@ -115,7 +115,7 @@ class SerialNode(Node):
             # Send the message to STM32 via serial
             self.specs["speed"] = f"{msg.linear.x:.3f}"
             self.specs["angle"] = f"{msg.angular.z:.3f}"
-            self.specs["distance"] = f"{msg.linear.y:.3f}"
+            # self.specs["distance"] = f"{msg.linear.y:.3f}"
         except Exception as e:
             self.get_logger().error(f"Error sending follow specs to STM32: {e}")
 
@@ -237,17 +237,20 @@ class SerialNode(Node):
         """
         try:
             if self.SIGNAL_FOLLOW_SPECS:
-                distance = float(self.specs["distance"])
-                if distance < 1:
-                    frame_ = f"s:1:2:{self.specs['angle']}:STOP:e"
-                    self.get_logger().info(f"Sending specs to stm32 {frame_}")
-                    self.serial_connection.write((frame_).encode("utf-8"))
-                    return
-                frame_ = f"s:1:2:{self.specs['angle']}:{self.specs['speed']}:e\n"
-                self.get_logger().info(f"Sending specs to stm32 {frame_}")
-                self.serial_connection.write((frame_).encode("utf-8"))
+                # distance = float(self.specs["distance"])
+                # if distance < 0.4:
+                #     frame_ = f"s:1:2:x:x:e"
+                # else:
+                frame_ = f"s:1:2:{self.specs['angle']}:{self.specs['speed']}:e"
+                
+                self.get_logger().info(f"Writing specs to file: {frame_}")
+
+                # Ghi vào file spec_follow.txt
+                with open("spec_follow.txt", "w", encoding="utf-8") as file:
+                    file.write(frame_ + "\n")
+
         except Exception as e:
-            self.get_logger().error(f"Error sending follow specs to STM32: {e}")
+            self.get_logger().error(f"Error writing follow specs to file: {e}")
 
     def send_gps_data(self):
         """
