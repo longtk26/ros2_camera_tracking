@@ -21,6 +21,7 @@ services:
        - ./data/imu_data.txt:/app/imu_data.txt
        - ./data/focal_length.txt:/app/focal_length.txt
        - ./data/spec_follow.txt:/app/spec_follow.txt
+       - ./ssdlite320_mobilenet_v3_large_coco-a79551df.pth:/root/.cache/torch/hub/checkpoints/ssdlite320_mobilenet_v3_large_coco-a79551df.pth
     tty: true  # Keep the container running for ROS commands
     privileged: true  # Allow access to hardware devices
     networks:

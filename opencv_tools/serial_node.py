@@ -243,11 +243,8 @@ class SerialNode(Node):
                 # else:
                 frame_ = f"s:1:2:{self.specs['angle']}:{self.specs['speed']}:e"
                 
-                self.get_logger().info(f"Writing specs to file: {frame_}")
-
-                # Ghi vào file spec_follow.txt
-                with open("spec_follow.txt", "w", encoding="utf-8") as file:
-                    file.write(frame_ + "\n")
+                self.get_logger().info(f"Sending specs to STM32: {frame_}")
+                self.serial_connection.write((frame_).encode("utf-8"))
 
         except Exception as e:
             self.get_logger().error(f"Error writing follow specs to file: {e}")

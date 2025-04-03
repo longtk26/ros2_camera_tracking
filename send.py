@@ -43,7 +43,6 @@ def main():
                 print(f"Sent: {data_to_send}")
                 last_sent = data_to_send  # Cập nhật dữ liệu đã gửi
 
-            time.sleep(0.01)  # Kiểm tra file mỗi 100ms
 
     except KeyboardInterrupt:
         print("Stopping serial data communication.")

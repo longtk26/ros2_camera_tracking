@@ -54,7 +54,7 @@ def tracking(self, multi_tracker, frame_update):
                     angle = utils.calculate_angle(new_box, frame_update, self)
                     twist_message = Twist()
                     twist_message.linear.x = vel
-                    twist_message.angular.z = angle * 1.5
+                    twist_message.angular.z = angle * 2
                     # twist_message.linear.y = distance
                     self.publishers_follow_specs_.publish(twist_message)
 
