@@ -25,15 +25,15 @@ class SerialNode(Node):
         # Serial gps configuration
         self.serial_gps_port = "/dev/ttyACM0"  # Update this to your GPS's port
         self.baud_rate_gps = 38400
-        # self.serial_gps_conn = serial.Serial(
-        #     self.serial_gps_port,
-        #     self.baud_rate_gps,
-        #     timeout=1,
-        #     parity=serial.PARITY_NONE,
-        #     stopbits=serial.STOPBITS_ONE,
-        #     bytesize=serial.EIGHTBITS
-        # )
-        self.serial_gps_conn = None
+        self.serial_gps_conn = serial.Serial(
+            self.serial_gps_port,
+            self.baud_rate_gps,
+            timeout=1,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.EIGHTBITS
+        )
+        # self.serial_gps_conn = None
 
         # Specs for STM32
         self.specs = {
@@ -58,10 +58,10 @@ class SerialNode(Node):
 
 
         # ROS2 timers
-        self.timer_ = self.create_timer(0.01, self.send_follow_specs)
+        # self.timer_ = self.create_timer(0.01, self.send_follow_specs)
         self.timer_receive_STM32_ = self.create_timer(0.01, self.read_from_stm32)
-        # self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
-        # self.timer_send_standley_output = self.create_timer(0.01, self.send_standley_output)
+        self.timer_read_gps_ = self.create_timer(0.01, self.read_gps_data)
+        self.timer_send_standley_output = self.create_timer(0.01, self.send_standley_output)
         self.get_logger().info("Serial node has been started.")
         
 
@@ -98,7 +98,6 @@ class SerialNode(Node):
                 elif not(self.gps_data == "find-me"):
                     self.SIGNAL_GPS = True
                     self.SIGNAL_INIT_GPS = False
-                    self.send_gps_data()
                 else:
                     self.SIGNAL_GPS = False
                     self.SIGNAL_INIT_GPS = True
@@ -251,28 +250,6 @@ class SerialNode(Node):
 
         except Exception as e:
             self.get_logger().error(f"Error writing follow specs to file: {e}")
-
-    def send_gps_data(self):
-        """
-        Send GPS data to STM32.
-        """
-        try:
-            # Send GPS data to STM32
-            if self.SIGNAL_GPS:
-                frame_ = self._convert_gps_data(self.gps_data)
-                full_frame = ""
-                full_points = 0
-                for index, data in enumerate(frame_):
-                    frame_ = f"s:2:1:{data[0]}:{data[1]}:e"
-                    full_frame += frame_
-                    full_points = index
-
-                full_frame += "E"
-                self.get_logger().info(f"Sending GPS data to STM32:::: {full_frame}")
-                self.serial_connection.write((full_frame).encode("utf-8"))
-                self.get_logger().info(f"Total points:::: {full_points + 1}")
-        except Exception as e:
-            self.get_logger().error(f"Error sending GPS data to STM32: {e}")
 
     def send_request_imu_to_stm32(self):
         """
