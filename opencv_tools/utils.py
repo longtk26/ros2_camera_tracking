@@ -37,7 +37,7 @@ class Utils:
             color = (0, 0, 255) 
             thickness = 2  
 
-            cv2.putText(current_frame, velocity_text, position, font, font_scale, color, thickness)
+            # cv2.putText(current_frame, velocity_text, position, font, font_scale, color, thickness)
         return velocity_meter
     
     def calculate_distance(self, position, current_frame, node_detect):
@@ -64,7 +64,7 @@ class Utils:
             color = (255, 0, 0)  # Green color for the text
             thickness = 2  # Thickness of the text
 
-        cv2.putText(current_frame, distance_text, position, font, font_scale, color, thickness)
+        # cv2.putText(current_frame, distance_text, position, font, font_scale, color, thickness)
 
         return distance
 
@@ -101,10 +101,10 @@ class Utils:
         # Display angle on the frame if provided
         if current_frame is not None:
             angle_text = f"Angle: {angle:.2f} degree"
-            position_text = (50, 150)
+            position_text = (50, 50)
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 1
-            color = (0, 255, 0)
+            color = (0, 0, 255)
             thickness = 2
 
             cv2.putText(current_frame, angle_text, position_text, font, font_scale, color, thickness)
