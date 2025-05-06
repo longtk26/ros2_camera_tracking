@@ -23,6 +23,10 @@ class StandleyNode(Node):
         self.current = 0.0
         self.standley_angle = 0.0
         self.closest_point = None
+        self.min_distance = 0.0
+        self.total_min_distance = 0.0
+        self.num_points_to_calculate_average_min_distance = 0
+        self.average_min_distance = 0.0
         # ROS2 subscription
         self.subscription_ui = self.create_subscription(
             String,
@@ -109,8 +113,13 @@ class StandleyNode(Node):
                 self.angle_imu_before_standley = float(self.angle_imu)
                 delta, distance_to_goal, min_distance, heading_ref, theta_d, closest_point = self.__run_standley_algorithm()
                 angle_imu_rad = math.radians(float(self.angle_imu))
+
                 self.standley_angle = delta
                 self.closest_point = closest_point
+                self.min_distance = min_distance
+                self.total_min_distance += min_distance
+                self.average_min_distance = self.total_min_distance / self.num_points_to_calculate_average_min_distance if self.num_points_to_calculate_average_min_distance > 0 else 0
+                
                 # self.get_logger().info(f"Delta: {delta}, Distance to goal: {distance_to_goal}, Min distance: {min_distance}, IMU: {angle_imu_rad}, X_Curr: {self.x_current}, Y_Curr: {self.y_current}")
                 self.__publish_msg(type_msg="ui", data=f"{delta}:{distance_to_goal}:{min_distance}:{angle_imu_rad}:{heading_ref}:{theta_d}:{closest_point[0]}:{closest_point[1]}")
         except Exception as e:
@@ -130,7 +139,7 @@ class StandleyNode(Node):
         """
         try:
             if self.START_STANDLEY_ALGORITHM:
-                self.__publish_msg(type_msg="ui-graph", data=f"{self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}")
+                self.__publish_msg(type_msg="ui-graph", data=f"{self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}:{self.min_distance}:{self.average_min_distance}")
                 # self.get_logger().info(f"Published graph data: {self.closest_point[0]}:{self.x_current}:{self.closest_point[1]}:{self.y_current}")
         except Exception as e:
             self.get_logger().error(f"Error in update graph: {e}")
@@ -167,6 +176,7 @@ class StandleyNode(Node):
             # x_ref, y_ref, j = closest_point
             self.current, min_distance = self.find_closest_in_window(self.x_current, self.y_current, self.x_y_coordinates, self.current, 10)
             j = self.current
+            self.num_points_to_calculate_average_min_distance += 1
             closet_point = self.x_y_coordinates[j]
             # self.get_logger().info(f"Closest point [{j}]: {self.x_y_coordinates[j]}")
             
