@@ -43,10 +43,10 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        publish_image_node,
-        detect_tracking_node,
+        # publish_image_node,
+        # detect_tracking_node,
         serial_node,
-        # standley_node,
+        standley_node,
         rosbridge_server,
         # socket_node
     ])
